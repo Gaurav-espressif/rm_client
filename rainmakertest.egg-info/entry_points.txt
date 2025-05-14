@@ -1,0 +1,2 @@
+[console_scripts]
+rmcli = rainmakertest.cli:cli
