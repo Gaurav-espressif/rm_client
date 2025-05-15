@@ -1,3 +1,5 @@
+import os
+
 import click
 from typing import Optional, List
 from .utils.api_client import ApiClient
@@ -132,35 +134,60 @@ def image():
 
 
 @image.command()
-@click.option('--base64', help="Base64 encoded firmware image (use either this or --file)")
-@click.option('--file', type=click.Path(exists=True), help="JSON file containing upload parameters")
+@click.option('--base64', help="Base64 encoded firmware image (optional if default .bin exists)")
+@click.option('--file', type=click.Path(exists=True), help="Path to .bin firmware file (optional)")
 @click.option('--name', required=True, help="Image name")
 @click.option('--version', help="Firmware version")
 @click.option('--model', help="Device model")
 @click.option('--type', help="Device type")
 @click.pass_context
 def upload(ctx, base64, file, name, version, model, type):
-    """Upload a new OTA image (provide either --base64 or --file)"""
-    if not (base64 or file):
-        raise click.UsageError("You must provide either --base64 or --file")
+    """Upload a new OTA image (uses switch.bin if no --base64 or --file provided)"""
+    ota_service = ctx.obj['ota_image_service']
 
-    if file:
-        import json
-        with open(file) as f:
-            payload = json.load(f)
-        # Validate required fields
-        if 'base64_fwimage' not in payload or 'image_name' not in payload:
-            raise click.BadParameter("JSON file must contain base64_fwimage and image_name")
-        result = ctx.obj['ota_image_service'].upload_image(**payload)
-    else:
-        result = ctx.obj['ota_image_service'].upload_image(
-            base64_fwimage=base64,
-            image_name=name,
-            fw_version=version,
-            model=model,
-            type=type
-        )
-    click.echo(f"Image uploaded: {prettify(result)}")
+    # Default file path (adjust based on your project structure)
+    DEFAULT_BIN = os.path.join(os.path.dirname(__file__), '..', 'switch.bin')
+
+    try:
+        if file:
+            # Handle .bin file upload
+            result = ota_service.upload_image(
+                bin_file_path=file,
+                image_name=name,
+                fw_version=version,
+                model=model,
+                type=type
+            )
+        elif base64:
+            # Handle direct base64 upload
+            result = ota_service.upload_image(
+                base64_fwimage=base64,
+                image_name=name,
+                fw_version=version,
+                model=model,
+                type=type
+            )
+        else:
+            # Fallback to default switch.bin
+            if os.path.exists(DEFAULT_BIN):
+                click.echo("No firmware provided - using default switch.bin")
+                result = ota_service.upload_image(
+                    bin_file_path=DEFAULT_BIN,
+                    image_name=name,
+                    fw_version=version,
+                    model=model,
+                    type=type
+                )
+            else:
+                raise click.UsageError(
+                    "No firmware provided and default switch.bin not found.\n"
+                    "Please use either --base64, --file, or place switch.bin in the project root."
+                )
+
+        click.echo(f"Image uploaded: {prettify(result)}")
+    except Exception as e:
+        click.echo(f"Error: {str(e)}", err=True)
+        raise click.Abort()
 
 
 @image.command()

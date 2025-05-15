@@ -1,6 +1,7 @@
 setup.py
 rainmakertest/__init__.py
 rainmakertest/cli.py
+rainmakertest/config.json
 rainmakertest/test_token.py
 rainmakertest.egg-info/PKG-INFO
 rainmakertest.egg-info/SOURCES.txt
