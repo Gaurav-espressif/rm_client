@@ -3,10 +3,13 @@ import os
 from typing import Dict, Any
 
 # Get the directory where this script (config.py) is located
-CONFIG_DIR = os.path.dirname(os.path.abspath(__file__))
+UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Define the absolute path to config.json
-CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+# Go up one level to reach the project root (r_maker_client/)
+PROJECT_ROOT = os.path.dirname(UTILS_DIR)
+
+# Define the absolute path to config.json (now in project root)
+CONFIG_FILE = os.path.join(PROJECT_ROOT, "config.json")
 
 
 def load_config() -> Dict[str, Any]:
