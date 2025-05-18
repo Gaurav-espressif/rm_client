@@ -1,5 +1,4 @@
 import os
-
 import click
 from typing import Optional, List
 from .utils.api_client import ApiClient
@@ -58,21 +57,53 @@ def logout(ctx):
 
 
 # User commands
+# Top-level create command group
 @cli.group()
-def user():
-    """User operations"""
+def create():
+    """Create different types of users"""
     pass
 
 
-@user.command()
+@create.command()
 @click.option('--username', prompt=True, help="Username (email or phone)")
 @click.option('--password', prompt=True, hide_input=True, help="Password")
 @click.option('--locale', default="no_locale", help="Locale preference")
 @click.pass_context
-def create(ctx, username, password, locale):
-    """Create a new user"""
-    result = ctx.obj['user_service'].create_user(username, password, locale)
+def user(ctx, username, password, locale):
+    """Create a regular user account"""
+    result = ctx.obj['user_service'].create_user(username, password)
     click.echo(f"User created: {result}")
+
+
+@create.command()
+@click.option('--username', prompt=True, help="Admin username (email)")
+@click.option('--quota', type=int, prompt=True, help="Admin quota (required)")
+@click.pass_context
+def admin(ctx, username, quota):
+    """Create an admin user account"""
+    result = ctx.obj['admin_service'].create_admin(
+        user_name=username,
+        quota=quota
+    )
+    click.echo(f"Admin user created: {prettify(result)}")
+
+
+@create.command()
+@click.option('--username', prompt=True, help="Superadmin username (email)")
+@click.pass_context
+def superadmin(ctx, username):
+    """Create a superadmin user account"""
+    result = ctx.obj['admin_service'].create_superadmin(
+        user_name=username
+    )
+    click.echo(f"Superadmin user created: {prettify(result)}")
+
+
+# User commands
+@cli.group()
+def user():
+    """User operations"""
+    pass
 
 
 @user.command()
@@ -106,18 +137,52 @@ def admin():
 
 
 @admin.command()
-@click.option('--username', prompt=True, help="Admin username (email)")
-@click.option('--super', is_flag=True, help="Create as superadmin")
-@click.option('--locale', default="no_locale", help="Locale preference")
+@click.option('--username', help="Filter by username")
+@click.option('--all-users', is_flag=True, help="Get all users")
+@click.option('--admin', is_flag=True, help="Filter admin users")
+@click.option('--superadmin', is_flag=True, help="Filter superadmin users")
 @click.pass_context
-def create_user(ctx, username, super, locale):
-    """Create an admin user"""
-    result = ctx.obj['admin_service'].create_admin_user(
-        username,
-        super_admin=super,
-        locale=locale
+def list_users(ctx, username, all_users, admin, superadmin):
+    """List users with optional filters"""
+    result = ctx.obj['admin_service'].get_user_details(
+        user_name=username,
+        all_users=all_users,
+        admin=admin,
+        superadmin=superadmin
     )
-    click.echo(f"Admin user created: {prettify(result)}")
+    click.echo(f"Users: {prettify(result)}")
+
+
+@admin.command()
+@click.option('--username', prompt=True, help="Username to update")
+@click.option('--quota', type=int, help="New quota value")
+@click.option('--admin', is_flag=True, help="Set as admin")
+@click.option('--superadmin', is_flag=True, help="Set as superadmin")
+@click.pass_context
+def update_user(ctx, username, quota, admin, superadmin):
+    """Update user details"""
+    payload = {}
+    if quota is not None:
+        payload['quota'] = quota
+    if admin:
+        payload['admin'] = True
+    if superadmin:
+        payload['super_admin'] = True
+
+    result = ctx.obj['admin_service'].update_admin_user(
+        user_name=username,
+        payload=payload
+    )
+    click.echo(f"User updated: {prettify(result)}")
+
+
+@admin.command()
+@click.option('--username', prompt=True, help="Username to delete")
+@click.pass_context
+def delete_user(ctx, username):
+    """Delete a user account"""
+    result = ctx.obj['admin_service'].delete_admin_user(user_name=username)
+    click.echo(f"User deleted: {prettify(result)}")
 
 
 # OTA Image commands
@@ -411,6 +476,41 @@ def status(ctx, node_id):
         click.echo(f"Node {node_id} status: {status.get('status', 'unknown')}")
     except Exception as e:
         click.echo(f"Error getting status: {str(e)}", err=True)
+
+@node.command()
+@click.option('--node-id', required=True, help="Node ID to map/unmap")
+@click.option('--secret-key', required=True, help="Node secret key")
+@click.option('--operation', type=click.Choice(['add', 'remove']), default='add',
+              help="Operation type (add/remove)")
+@click.pass_context
+def map(ctx, node_id, secret_key, operation):
+    """Map or unmap a node to the user"""
+    try:
+        result = ctx.obj['node_service'].map_user_node(
+            node_id=node_id,
+            secret_key=secret_key,
+            operation=operation
+        )
+        request_id = result.get('request_id')
+        if request_id:
+            click.echo(f"Mapping operation initiated. Request ID: {request_id}")
+            click.echo("Use 'node mapping-status --request-id <id>' to check status")
+        else:
+            click.echo(f"Operation completed: {prettify(result)}")
+    except Exception as e:
+        click.echo(f"Error mapping node: {str(e)}", err=True)
+
+@node.command()
+@click.option('--request-id', required=True, help="Request ID from mapping operation")
+@click.pass_context
+def mapping_status(ctx, request_id):
+    """Check status of a node mapping request"""
+    try:
+        status = ctx.obj['node_service'].get_mapping_status(request_id)
+        click.echo(f"Mapping status: {prettify(status)}")
+    except Exception as e:
+        click.echo(f"Error getting mapping status: {str(e)}", err=True)
+
 
 
 # Node admin commands

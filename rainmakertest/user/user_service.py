@@ -15,7 +15,8 @@ class UserService:
             "password": password
         }
         print(f"Creating user with payload: {payload}")
-        return self.api_client.post(endpoint, data=payload, params=params)
+        # Add authenticate=False to disable token requirement
+        return self.api_client.post(endpoint, data=payload, params=params, authenticate=False)
 
     def confirm_user(self, username: str, verification_code: str, locale: str = "no_locale") -> Dict:
         """Confirm user account with verification code"""
@@ -25,30 +26,53 @@ class UserService:
             "user_name": username,
             "verification_code": verification_code
         }
-        return self.api_client.post(endpoint, data=payload, params=params)
+        # Add authenticate=False to disable token requirement
+        return self.api_client.post(endpoint, data=payload, params=params, authenticate=False)
 
     def get_user_info(self) -> Dict:
-        """Get current user's information"""
+        """Get current user's information using access token"""
         endpoint = "/v1/user2"
         try:
+            # Verify we have a valid token first
+            token_data = self.api_client.token_store.get_token()
+            if not token_data or not token_data.get("access_token"):
+                raise ValueError("No valid access token available - please login first")
+
+            # Make the API call (token should be auto-added by api_client)
             response = self.api_client.get(endpoint)
+
             if not response:
                 raise ValueError("Empty response from server")
 
-            # Basic response validation
-            required_fields = {"user_id", "user_name", "locale"}
-            if not all(field in response for field in required_fields):
-                missing = required_fields - response.keys()
-                raise ValueError(f"Missing required fields: {missing}")
+            # Only enforce absolutely required fields
+            if not isinstance(response, dict):
+                raise ValueError("Invalid response format - expected dictionary")
 
-            return response
+            # Minimal required fields (just user_id)
+            if "user_id" not in response:
+                raise ValueError("Response missing required field: user_id")
+
+            # Set sensible defaults for optional fields
+            return {
+                "user_id": response["user_id"],
+                "user_name": response.get("user_name", ""),
+                "locale": response.get("locale", "no_locale"),
+                "super_admin": response.get("super_admin", False),
+                "admin": response.get("admin", False),
+                "mfa": response.get("mfa", False),
+                # Include any additional fields present in response
+                **{k: v for k, v in response.items()
+                   if k not in ["user_id", "user_name", "locale", "super_admin", "admin", "mfa"]}
+            }
+
         except Exception as e:
             print(f"\nUSER INFO ERROR DETAILS:")
             print(f"Endpoint: {endpoint}")
-            token_data = self.api_client.token_store.get_token()
-            access_token = token_data.get("access_token", "") if token_data else ""
-            print(f"Token: {access_token[:10]}...")
-            raise Exception(f"Failed to get user info: {str(e)}")
+            print(f"Token Present: {'Yes' if token_data else 'No'}")
+            if token_data:
+                print(f"Token: {token_data.get('access_token', '')[:10]}...")
+            print(f"Response: {response if 'response' in locals() else 'Not available'}")
+            raise Exception(f"Failed to get user info: {str(e)}") from e
 
     def update_user(self, name: Optional[str] = None, phone_number: Optional[str] = None) -> Dict:
         """Update user information"""

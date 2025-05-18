@@ -18,7 +18,7 @@
     "default_node": "node-id-for-testing",
     "secondary_node": "secondary-node-id-for-testing"
   },
-  "ota": {
+  "ota_image": {
     "default_image_id": "7HhnfRg4R",
     "default_group": "FFFF-FFFF",
     "default_timeout": 1296000,

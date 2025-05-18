@@ -43,3 +43,27 @@ class NodeService:
         endpoint = "/v1/user/nodes/status"
         params = {"node_id": node_id}
         return self.api_client.get(endpoint, params=params)
+
+    def map_user_node(
+            self,
+            node_id: str,
+            secret_key: str,
+            operation: str = "add"
+    ) -> Dict:
+        """Add or remove user node mapping"""
+        endpoint = f"/v1/user/nodes/mapping"
+        payload = {
+            "node_id": node_id,
+            "secret_key": secret_key,
+            "operation": operation
+        }
+        return self.api_client.put(endpoint, json=payload)
+
+    def get_mapping_status(
+            self,
+            request_id: str
+    ) -> Dict:
+        """Get status of user node mapping request"""
+        endpoint = f"/v1/user/nodes/mapping"
+        params = {"request_id": request_id}
+        return self.api_client.get(endpoint, params=params)
