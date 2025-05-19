@@ -1,14 +1,73 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 from ..utils.api_client import ApiClient
+import json
+import logging
+
 
 class NodeService:
     def __init__(self, api_client: ApiClient):
         self.api_client = api_client
+        self.logger = logging.getLogger(__name__)
 
-    def get_user_nodes(self) -> List[Dict]:
+    def get_user_nodes(self, raw: bool = False) -> Union[List[Dict], Dict]:
         """Get all nodes associated with the user"""
         endpoint = "/v1/user/nodes"
-        return self.api_client.get(endpoint)
+
+        try:
+            response = self.api_client.get(endpoint)
+            self.logger.debug(f"Raw API response: {response} (type: {type(response)})")
+
+            # Handle None response
+            if response is None:
+                self.logger.warning("API returned None response")
+                return {} if raw else []
+
+            # Handle string response (could be JSON string)
+            if isinstance(response, str):
+                try:
+                    response = json.loads(response)
+                except json.JSONDecodeError:
+                    self.logger.warning("Failed to decode JSON string response")
+                    return {} if raw else []
+
+            # Handle dict response
+            if isinstance(response, dict):
+                return response if raw else response.get("nodes", [])
+
+            # Handle list response
+            elif isinstance(response, list):
+                return {"nodes": response, "total": len(response)} if raw else response
+
+            self.logger.warning(f"Unexpected response type: {type(response)}")
+            return {} if raw else []
+
+        except Exception as e:
+            self.logger.error(f"Error getting user nodes: {str(e)}")
+            return {} if raw else []
+
+    def get_node_config(self, node_id: str) -> Dict:
+        """Get node configuration"""
+        endpoint = "/v1/user/nodes/config"
+        params = {"node_id": node_id}
+        response = self.api_client.get(endpoint, params=params)
+        if isinstance(response, dict) and 'config' in response:
+            return response['config']
+        return response or {}
+
+    def get_node_status(self, node_id: str) -> Dict:
+        """Get node online/offline status"""
+        endpoint = "/v1/user/nodes/status"
+        params = {"node_id": node_id}
+        response = self.api_client.get(endpoint, params=params)
+
+        # Handle the connectivity response format
+        if isinstance(response, dict):
+            if 'connectivity' in response and isinstance(response['connectivity'], dict):
+                connected = response['connectivity'].get('connected', None)
+                if connected is not None:
+                    return {'status': 'online' if connected else 'offline'}
+
+        return {'status': 'unknown'}
 
     def update_node_metadata(
         self,
@@ -31,18 +90,6 @@ class NodeService:
         endpoint = "/v1/user/nodes"
         params = {"node_id": node_id}
         return self.api_client.delete(endpoint, params=params, json={"tags": tags})
-
-    def get_node_config(self, node_id: str) -> Dict:
-        """Get node configuration"""
-        endpoint = "/v1/user/nodes/config"
-        params = {"node_id": node_id}
-        return self.api_client.get(endpoint, params=params)
-
-    def get_node_status(self, node_id: str) -> Dict:
-        """Get node online/offline status"""
-        endpoint = "/v1/user/nodes/status"
-        params = {"node_id": node_id}
-        return self.api_client.get(endpoint, params=params)
 
     def map_user_node(
             self,

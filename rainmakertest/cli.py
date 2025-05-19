@@ -1,6 +1,8 @@
 import os
 import click
 from typing import Optional, List
+
+from rainmakertest.utils.email_service import EmailService
 from .utils.api_client import ApiClient
 from .auth.login_service import LoginService
 from .user.user_service import UserService
@@ -11,11 +13,21 @@ from .utils.token_json_load import prettify
 from .nodes.node_service import NodeService
 from .nodes.node_admin_service import NodeAdminService
 from tabulate import tabulate
+import logging
+import json
+
 
 @click.group()
+@click.option('--debug', is_flag=True, help="Enable debug logging")
 @click.pass_context
-def cli(ctx):
+def cli(ctx, debug):  # Added debug parameter here
     """Rainmaker CLI Tool"""
+    # Set logging level based on debug flag
+    logging.basicConfig(
+        level=logging.DEBUG if debug else logging.WARNING,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    )
+
     ctx.ensure_object(dict)
     api_client = ApiClient()
     ctx.obj['api_client'] = api_client
@@ -388,29 +400,45 @@ def node():
 def list_nodes(ctx):
     """List all nodes associated with the user"""
     try:
-        nodes = ctx.obj['node_service'].get_user_nodes()
-        if not nodes:
-            click.echo("No nodes found")
-            return
+        # This returns a dict like {'nodes': [...], 'total': 2}
+        response = ctx.obj['node_service'].get_user_nodes(raw=True)  # <-- explained below
 
-        # Format output as a table
+        # Print raw JSON output
+        click.echo(json.dumps(response, indent=4))
 
-        table = []
-        for node in nodes:
-            table.append([
-                node.get('node_id', 'N/A'),
-                node.get('name', 'N/A'),
-                node.get('type', 'N/A'),
-                node.get('status', 'N/A')
-            ])
-
-        click.echo(tabulate(
-            table,
-            headers=["Node ID", "Name", "Type", "Status"],
-            tablefmt="grid"
-        ))
     except Exception as e:
         click.echo(f"Error listing nodes: {str(e)}", err=True)
+
+
+
+@node.command()
+@click.option('--node-id', required=True, help="Node ID to query")
+@click.pass_context
+def config(ctx, node_id):
+    """Get node configuration"""
+    try:
+        config = ctx.obj['node_service'].get_node_config(node_id)
+        if not config:
+            click.echo(f"No configuration found for node {node_id}")
+            return
+
+        import json
+        click.echo(json.dumps(config, indent=2))
+    except Exception as e:
+        click.echo(f"Error getting config: {str(e)}", err=True)
+
+
+@node.command()
+@click.option('--node-id', required=True, help="Node ID to check")
+@click.pass_context
+def status(ctx, node_id):
+    """Get node online/offline status"""
+    try:
+        status_info = ctx.obj['node_service'].get_node_status(node_id)
+        status = status_info.get('status', 'unknown')
+        click.echo(f"Node {node_id} status: {status}")
+    except Exception as e:
+        click.echo(f"Error getting status: {str(e)}", err=True)
 
 
 @node.command()
@@ -452,36 +480,6 @@ def delete_tags(ctx, node_id, tags):
     except Exception as e:
         click.echo(f"Error removing tags: {str(e)}", err=True)
 
-
-@node.command()
-@click.option('--node-id', required=True, help="Node ID to query")
-@click.pass_context
-def config(ctx, node_id):
-    """Get node configuration"""
-    try:
-        config = ctx.obj['node_service'].get_node_config(node_id)
-        import json
-        click.echo(json.dumps(config, indent=2))
-    except Exception as e:
-        click.echo(f"Error getting config: {str(e)}", err=True)
-
-
-@node.command()
-@click.option('--node-id', required=True, help="Node ID to check")
-@click.pass_context
-def status(ctx, node_id):
-    """Get node online/offline status"""
-    try:
-        status = ctx.obj['node_service'].get_node_status(node_id)
-        click.echo(f"Node {node_id} status: {status.get('status', 'unknown')}")
-    except Exception as e:
-        click.echo(f"Error getting status: {str(e)}", err=True)
-
-@node.command()
-@click.option('--node-id', required=True, help="Node ID to map/unmap")
-@click.option('--secret-key', required=True, help="Node secret key")
-@click.option('--operation', type=click.Choice(['add', 'remove']), default='add',
-              help="Operation type (add/remove)")
 @click.pass_context
 def map(ctx, node_id, secret_key, operation):
     """Map or unmap a node to the user"""
@@ -560,6 +558,49 @@ def admin_list_nodes(ctx, **filters):
         ))
     except Exception as e:
         click.echo(f"Error listing admin nodes: {str(e)}", err=True)
+
+
+@cli.group()
+def email():
+    """Email operations for testing"""
+    pass
+@email.command()
+@click.pass_context
+def generate(ctx):
+    """Generate a random test email address"""
+    try:
+        email_service = EmailService()
+        random_email = email_service.generate_random_email()
+        click.echo(f"Generated email: {random_email}")
+        ctx.obj['last_generated_email'] = random_email
+    except Exception as e:
+        click.echo(f"Error generating email: {str(e)}", err=True)
+        raise click.Abort()
+
+# Verify email
+@email.command()
+@click.option('--email', help="Email address to verify (uses last generated if not specified)")
+@click.pass_context
+def verify(ctx, email):
+    """Verify an email address by retrieving the verification code"""
+    try:
+        email_service = EmailService()
+        email_to_verify = email or ctx.obj.get('last_generated_email')
+        if not email_to_verify:
+            raise click.UsageError("No email specified and no last generated email found")
+
+        click.echo(f"Checking verification code for {email_to_verify}...")
+
+        code = email_service.get_verification_code(email_to_verify)
+        if code:
+            click.echo(f"Verification code: {code}")
+        else:
+            click.echo("No verification code found in emails", err=True)
+    except Exception as e:
+        click.echo(f"Error verifying email: {str(e)}", err=True)
+        raise click.Abort()
+
+
 
 
 if __name__ == '__main__':
