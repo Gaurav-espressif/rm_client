@@ -1,4 +1,3 @@
-# utils/email_service.py
 import uuid
 import re
 import time
@@ -47,19 +46,30 @@ class EmailService:
                         soup = BeautifulSoup(html, 'html.parser')
                         text = soup.get_text()
 
-                        # Look for verification code patterns
+                        # Improved pattern matching for different email formats
                         patterns = [
-                            r'(?:Verification|Your Verification) Code is:\s*(\d{6})',
+                            # Pattern for simple one-line emails
+                            r'(?:verification|code)[\s:]*(\d{6})\b',
+                            # Pattern for Espressif formatted emails
+                            r'Your verification code is (\d{6})',
+                            # Generic 6-digit code anywhere in text
                             r'\b\d{6}\b',
-                            r'code:\s*(\d{6})',
-                            r'code is\s*(\d{6})'
+                            # Pattern for "Code: 123456" format
+                            r'[cC]ode:\s*(\d{6})',
+                            # Pattern for "Your code is 123456" format
+                            r'[yY]our code is\s*(\d{6})'
                         ]
 
+                        # Try all patterns in order
                         for pattern in patterns:
-                            match = re.search(pattern, text)
-                            if match:
-                                return match.group(1)
-                    except Exception:
+                            matches = re.findall(pattern, text)
+                            if matches:
+                                # Return the first 6-digit code found
+                                for match in matches:
+                                    if len(match) == 6 and match.isdigit():
+                                        return match
+
+                    except Exception as e:
                         continue
 
                 time.sleep(delay)

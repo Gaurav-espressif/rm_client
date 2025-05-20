@@ -40,4 +40,11 @@ class NodeAdminService:
         if start_id:
             params["start_id"] = start_id
 
-        return self.api_client.get(endpoint, params=params)
+        # The API client will now handle exceptions and return a structured dict
+        # We need to handle the case where it might return a dict for an error
+        response = self.api_client.get(endpoint, params=params)
+        if isinstance(response, dict) and response.get("status") == "failure":
+            # If the API client returns an error dict, convert it to a list containing the error
+            # Or you might want to raise a custom exception here, depending on how you want to handle it in cli.py
+            return [response] # Return the error as a single-item list for consistency with List[Dict] type hint
+        return response

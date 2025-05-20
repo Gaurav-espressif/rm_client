@@ -5,4 +5,5 @@ Requires-Dist: click>=8.0
 Requires-Dist: requests>=2.26
 Requires-Dist: tabulate>=0.8.9
 Requires-Dist: mailosaur
+Requires-Dist: beautifulsoup4>=4.9.3
 Dynamic: requires-dist

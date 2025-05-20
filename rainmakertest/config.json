@@ -1,33 +1,33 @@
 {
-  "environments": {
-    "http_base_url": "https://aqu8wbfoc7.execute-api.us-east-1.amazonaws.com/dev",
-    "rest_base_url": "https://ywn8p27fgj.execute-api.us-east-1.amazonaws.com/dev",
-    "dashboard_url": "https://doocj67u1to4r.cloudfront.net"
-  },
-  "test_users": {
-    "admin": {
-      "email": "sachin.bhalake@espressif.com",
-      "password": "PwtsYC1}DS"
+    "environments": {
+        "http_base_url": "https://api.rainmaker.espressif.com",
+        "rest_base_url": "https://api.rainmaker.espressif.com",
+        "dashboard_url": "https://dashboard.rainmaker.espressif.com/login"
     },
-    "regular_user": {
-      "email": "user@example.com",
-      "password": "user_test_password"
+    "test_users": {
+        "admin": {
+            "email": "sachin.bhalake@espressif.com",
+            "password": "PwtsYC1}DS"
+        },
+        "regular_user": {
+            "email": "user@example.com",
+            "password": "user_test_password"
+        }
+    },
+    "test_nodes": {
+        "default_node": "node-id-for-testing",
+        "secondary_node": "secondary-node-id-for-testing"
+    },
+    "ota_image": {
+        "default_image_id": "7HhnfRg4R",
+        "default_group": "FFFF-FFFF",
+        "default_timeout": 1296000,
+        "default_priority": 5,
+        "default_job_name": "OTA_Update_Job"
+    },
+    "matter_fabric": {
+        "csr": {
+            "default": "-----BEGIN CERTIFICATE REQUEST-----\nMIIBcDCCARYCAQAwgZQxGDAWBgNVBAMMD0ZNVVRKQ1dUWFZBQzFRUzELMAkGA1UE\nBhMCSU4xCzAJBgNVBAgMAk1IMQ0wCwYDVQQHDARQVU5FMRIwEAYDVQQKDAlFU1BS\nRVNTSUYxFzAVBgNVBAsMDkFQUCBGUkFNRVdPUktTMRAwDgYKKwYBBAGConwCAQwA\nMRAwDgYKKwYBBAGConwCAgwAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8Ype\ncuZIJC/BQXYfN1qkIepA3FZl8MmQAaAhZnVnwvfdeaUN7Mfh1HwX22hpNa9ilrw1\nlJJCrEdCegv9qG9KhKAfMB0GCSqGSIb3DQEJDjEQMA4wDAYDVR0TAQH/BAIwADAK\nBggqhkjOPQQDAgNIADBFAiADQsNLev7us8E5Fzr43ZKnKwkmO6KOS9zqgN3xRgCa\ncgIhAOLbXVlFYsW/uzZNUXY37dhnVd6D8ixLmw/UckDwu+iu\n-----END CERTIFICATE REQUEST-----"
+        }
     }
-  },
-  "test_nodes": {
-    "default_node": "node-id-for-testing",
-    "secondary_node": "secondary-node-id-for-testing"
-  },
-  "ota_image": {
-    "default_image_id": "7HhnfRg4R",
-    "default_group": "FFFF-FFFF",
-    "default_timeout": 1296000,
-    "default_priority": 5,
-    "default_job_name": "OTA_Update_Job"
-  },
-  "matter_fabric": {
-    "csr": {
-      "default": "-----BEGIN CERTIFICATE REQUEST-----\nMIIBcDCCARYCAQAwgZQxGDAWBgNVBAMMD0ZNVVRKQ1dUWFZBQzFRUzELMAkGA1UE\nBhMCSU4xCzAJBgNVBAgMAk1IMQ0wCwYDVQQHDARQVU5FMRIwEAYDVQQKDAlFU1BS\nRVNTSUYxFzAVBgNVBAsMDkFQUCBGUkFNRVdPUktTMRAwDgYKKwYBBAGConwCAQwA\nMRAwDgYKKwYBBAGConwCAgwAMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE8Ype\ncuZIJC/BQXYfN1qkIepA3FZl8MmQAaAhZnVnwvfdeaUN7Mfh1HwX22hpNa9ilrw1\nlJJCrEdCegv9qG9KhKAfMB0GCSqGSIb3DQEJDjEQMA4wDAYDVR0TAQH/BAIwADAK\nBggqhkjOPQQDAgNIADBFAiADQsNLev7us8E5Fzr43ZKnKwkmO6KOS9zqgN3xRgCa\ncgIhAOLbXVlFYsW/uzZNUXY37dhnVd6D8ixLmw/UckDwu+iu\n-----END CERTIFICATE REQUEST-----"
-    }
-  }
 }

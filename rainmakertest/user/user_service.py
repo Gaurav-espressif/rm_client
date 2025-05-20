@@ -32,47 +32,32 @@ class UserService:
     def get_user_info(self) -> Dict:
         """Get current user's information using access token"""
         endpoint = "/v1/user2"
-        try:
-            # Verify we have a valid token first
-            token_data = self.api_client.token_store.get_token()
-            if not token_data or not token_data.get("access_token"):
-                raise ValueError("No valid access token available - please login first")
+        # The API client now handles exceptions and returns a structured dict for errors
+        response = self.api_client.get(endpoint)
 
-            # Make the API call (token should be auto-added by api_client)
-            response = self.api_client.get(endpoint)
+        # If the API client returned an error dict, return it directly
+        if isinstance(response, dict) and response.get("status") == "failure":
+            return response
 
-            if not response:
-                raise ValueError("Empty response from server")
+        # Original validation logic for successful responses
+        if not response:
+            return {"status": "failure", "description": "Empty response from server", "error_code": 0} # Custom error
+        if not isinstance(response, dict):
+            return {"status": "failure", "description": "Invalid response format - expected dictionary", "error_code": 0} # Custom error
+        if "user_id" not in response:
+            return {"status": "failure", "description": "Response missing required field: user_id", "error_code": 0} # Custom error
 
-            # Only enforce absolutely required fields
-            if not isinstance(response, dict):
-                raise ValueError("Invalid response format - expected dictionary")
+        return {
+            "user_id": response["user_id"],
+            "user_name": response.get("user_name", ""),
+            "locale": response.get("locale", "no_locale"),
+            "super_admin": response.get("super_admin", False),
+            "admin": response.get("admin", False),
+            "mfa": response.get("mfa", False),
+            **{k: v for k, v in response.items()
+               if k not in ["user_id", "user_name", "locale", "super_admin", "admin", "mfa"]}
+        }
 
-            # Minimal required fields (just user_id)
-            if "user_id" not in response:
-                raise ValueError("Response missing required field: user_id")
-
-            # Set sensible defaults for optional fields
-            return {
-                "user_id": response["user_id"],
-                "user_name": response.get("user_name", ""),
-                "locale": response.get("locale", "no_locale"),
-                "super_admin": response.get("super_admin", False),
-                "admin": response.get("admin", False),
-                "mfa": response.get("mfa", False),
-                # Include any additional fields present in response
-                **{k: v for k, v in response.items()
-                   if k not in ["user_id", "user_name", "locale", "super_admin", "admin", "mfa"]}
-            }
-
-        except Exception as e:
-            print(f"\nUSER INFO ERROR DETAILS:")
-            print(f"Endpoint: {endpoint}")
-            print(f"Token Present: {'Yes' if token_data else 'No'}")
-            if token_data:
-                print(f"Token: {token_data.get('access_token', '')[:10]}...")
-            print(f"Response: {response if 'response' in locals() else 'Not available'}")
-            raise Exception(f"Failed to get user info: {str(e)}") from e
 
     def update_user(self, name: Optional[str] = None, phone_number: Optional[str] = None) -> Dict:
         """Update user information"""

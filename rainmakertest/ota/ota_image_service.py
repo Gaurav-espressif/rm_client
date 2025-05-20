@@ -17,8 +17,9 @@ class OTAService:
                 file_content = f.read()
                 return base64.b64encode(file_content).decode('utf-8')
         except Exception as e:
-            print(f"Error reading file {file_path}: {str(e)}")
-            raise
+            # Re-raising for specific file errors is fine here if you want distinct error handling
+            raise ValueError(f"Error reading file {file_path}: {str(e)}") from e
+
 
     def upload_image(
             self,
@@ -41,9 +42,12 @@ class OTAService:
                 print(f"\n⚠No firmware provided. Using default file: {self.default_bin_path}")
                 base64_fwimage = self._file_to_base64(self.default_bin_path)
             else:
-                raise ValueError(
-                    "No firmware provided (use --base64, --file, or ensure switch.bin exists)"
-                )
+                return {
+                    "status": "failure",
+                    "description": "No firmware provided (use --base64, --file, or ensure switch.bin exists)",
+                    "error_code": 400000 # Custom client-side error code
+                }
+
 
         # Prepare payload
         payload = {
@@ -56,12 +60,9 @@ class OTAService:
         payload.update(kwargs)
         payload = {k: v for k, v in payload.items() if v is not None}
 
-        try:
-            response = self.api_client.post(endpoint, json=payload)
-            return response
-        except Exception as e:
-            print(f"\nUpload failed: {str(e)}")
-            raise
+        # The API client will handle exceptions and return a structured dict
+        return self.api_client.post(endpoint, json=payload)
+
 
     def get_images(
             self,

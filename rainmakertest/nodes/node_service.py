@@ -13,43 +13,48 @@ class NodeService:
         """Get all nodes associated with the user"""
         endpoint = "/v1/user/nodes"
 
-        try:
-            response = self.api_client.get(endpoint)
-            self.logger.debug(f"Raw API response: {response} (type: {type(response)})")
+        # The API client now handles exceptions and returns a structured dict for errors
+        response = self.api_client.get(endpoint)
+        self.logger.debug(f"Raw API response: {response} (type: {type(response)})")
 
-            # Handle None response
-            if response is None:
-                self.logger.warning("API returned None response")
+        # If the API client returned an error dict, return it directly if raw is True,
+        # or an empty list/dict otherwise (depending on what makes sense for your CLI)
+        if isinstance(response, dict) and response.get("status") == "failure":
+            return response if raw else []
+
+        # Handle None response (though api_client should prevent this now)
+        if response is None:
+            self.logger.warning("API returned None response")
+            return {} if raw else []
+
+        # Handle string response (could be JSON string) - this might be redundant if api_client always returns dict
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except json.JSONDecodeError:
+                self.logger.warning("Failed to decode JSON string response")
                 return {} if raw else []
 
-            # Handle string response (could be JSON string)
-            if isinstance(response, str):
-                try:
-                    response = json.loads(response)
-                except json.JSONDecodeError:
-                    self.logger.warning("Failed to decode JSON string response")
-                    return {} if raw else []
+        # Handle dict response
+        if isinstance(response, dict):
+            return response if raw else response.get("nodes", [])
 
-            # Handle dict response
-            if isinstance(response, dict):
-                return response if raw else response.get("nodes", [])
+        # Handle list response
+        elif isinstance(response, list):
+            return {"nodes": response, "total": len(response)} if raw else response
 
-            # Handle list response
-            elif isinstance(response, list):
-                return {"nodes": response, "total": len(response)} if raw else response
+        self.logger.warning(f"Unexpected response type: {type(response)}")
+        return {} if raw else []
 
-            self.logger.warning(f"Unexpected response type: {type(response)}")
-            return {} if raw else []
-
-        except Exception as e:
-            self.logger.error(f"Error getting user nodes: {str(e)}")
-            return {} if raw else []
 
     def get_node_config(self, node_id: str) -> Dict:
         """Get node configuration"""
         endpoint = "/v1/user/nodes/config"
         params = {"node_id": node_id}
         response = self.api_client.get(endpoint, params=params)
+        # Check if response is an error dict from api_client
+        if isinstance(response, dict) and response.get("status") == "failure":
+            return response # Return the error dict
         if isinstance(response, dict) and 'config' in response:
             return response['config']
         return response or {}
@@ -59,6 +64,10 @@ class NodeService:
         endpoint = "/v1/user/nodes/status"
         params = {"node_id": node_id}
         response = self.api_client.get(endpoint, params=params)
+
+        # Check if response is an error dict from api_client
+        if isinstance(response, dict) and response.get("status") == "failure":
+            return response # Return the error dict
 
         # Handle the connectivity response format
         if isinstance(response, dict):

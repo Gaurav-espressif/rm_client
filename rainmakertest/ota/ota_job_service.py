@@ -1,5 +1,3 @@
-from requests import HTTPError
-
 from rainmakertest.utils.api_client import ApiClient
 from typing import Dict, Optional, List, Union
 from datetime import datetime
@@ -14,7 +12,7 @@ class OTAJobService:
             ota_job_name: str,
             ota_image_id: str,
             description: Optional[str] = None,
-            nodes: Optional[List[str]] = None,  # Change type hint to List[str]
+            nodes: Optional[List[str]] = None,
             priority: int = 5,
             timeout: int = 1296000,
             force_push: bool = False,
@@ -104,10 +102,6 @@ class OTAJobService:
 
         Returns:
             Dictionary containing the API response
-
-        Raises:
-            HTTPError: If the job cannot be updated
-            ValueError: If the job is in invalid state for the operation
         """
         endpoint = "/v1/admin/otajob"
         payload = {
@@ -118,10 +112,5 @@ class OTAJobService:
         if archive:
             payload["archive"] = True
 
-        try:
-            return self.api_client.put(endpoint, json=payload)
-        except HTTPError as e:
-            if e.response.status_code == 404:
-                error_msg = e.response.json().get('description', 'Unknown error')
-                raise ValueError(f"Failed to update job: {error_msg}")
-            raise
+        # The API client will handle exceptions and return a structured dict
+        return self.api_client.put(endpoint, json=payload)

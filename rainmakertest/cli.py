@@ -15,6 +15,8 @@ from .nodes.node_admin_service import NodeAdminService
 from tabulate import tabulate
 import logging
 import json
+from pathlib import Path
+from .utils.config import update_base_url, get_config_path, get_base_url
 
 
 @click.group()
@@ -636,6 +638,71 @@ def verify(ctx, email):
     except Exception as e:
         click.echo(f"Error verifying email: {str(e)}", err=True)
         raise click.Abort()
+
+
+# In cli.py, modify the server command group:
+
+@cli.group()
+def server():
+    """Server configuration commands"""
+    pass
+
+
+@server.command()
+@click.option('--endpoint', help="New HTTP base URL endpoint")
+@click.option('--rest-endpoint', help="New REST base URL endpoint")
+@click.option('--dashboard', help="New dashboard URL")
+@click.pass_context
+def update(ctx, endpoint, rest_endpoint, dashboard):
+    """Update server endpoints in configuration"""
+    try:
+        from rainmakertest.utils.config import update_config, get_base_url
+
+        updates = {'environments': {}}
+        if endpoint:
+            updates['environments']['http_base_url'] = endpoint.rstrip('/')
+        if rest_endpoint:
+            updates['environments']['rest_base_url'] = rest_endpoint.rstrip('/')
+        if dashboard:
+            updates['environments']['dashboard_url'] = dashboard.rstrip('/')
+
+        update_config(updates)
+
+        # Update the API client's base URL if http endpoint was changed
+        if endpoint:
+            ctx.obj['api_client'].base_url = get_base_url('http')
+
+        click.echo("Server configuration updated successfully")
+        if endpoint:
+            click.echo(f"HTTP Base URL: {get_base_url('http')}")
+        if rest_endpoint:
+            click.echo(f"REST Base URL: {get_base_url('rest')}")
+        if dashboard:
+            click.echo(f"Dashboard URL: {updates['environments']['dashboard_url']}")
+
+    except Exception as e:
+        click.echo(f"Failed to update server configuration: {str(e)}", err=True)
+
+
+@server.command()
+@click.pass_context
+def reset(ctx):
+    """Reset server endpoints to Espressif public URLs"""
+    try:
+        from rainmakertest.utils.config import reset_to_default, get_base_url
+
+        reset_to_default()
+
+        # Update the API client's base URL
+        ctx.obj['api_client'].base_url = get_base_url('http')
+
+        click.echo("Server endpoints reset to Espressif public URLs")
+        click.echo(f"HTTP Base URL: {get_base_url('http')}")
+        click.echo(f"REST Base URL: {get_base_url('rest')}")
+        click.echo("Dashboard URL: https://rainmaker-admin.espressif.com")
+
+    except Exception as e:
+        click.echo(f"✗ Failed to reset server configuration: {str(e)}", err=True)
 
 
 if __name__ == '__main__':
