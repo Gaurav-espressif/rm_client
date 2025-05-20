@@ -11,7 +11,8 @@ setup(
         "click>=8.0",
         "requests>=2.26",
         "tabulate>=0.8.9",
-        "mailosaur"
+        "mailosaur",
+        "beautifulsoup4>=4.9.3"
     ],
     entry_points={
         'console_scripts': [
