@@ -1,6 +1,6 @@
 {
     "environments": {
-        "http_base_url": "https://api.rainmaker.espressif.com",
+        "http_base_url": "https://wjxz2kivb6.execute-api.us-east-1.amazonaws.com/dev",
         "rest_base_url": "https://api.rainmaker.espressif.com",
         "dashboard_url": "https://dashboard.rainmaker.espressif.com/login"
     },
