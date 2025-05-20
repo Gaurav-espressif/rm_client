@@ -60,7 +60,11 @@ def user(ctx, username, password):
         password = click.prompt("Password", hide_input=True)
 
     result = ctx.obj['login_service'].login_user(username, password)
-    click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+
+    if result.get("status") == "success":
+        click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+    else:
+        click.echo(f"Login failed: {result.get('message', 'Unknown error')}")
 
 
 # Logout command
