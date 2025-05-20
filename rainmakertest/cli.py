@@ -20,9 +20,8 @@ import json
 @click.group()
 @click.option('--debug', is_flag=True, help="Enable debug logging")
 @click.pass_context
-def cli(ctx, debug):  # Added debug parameter here
+def cli(ctx, debug):
     """Rainmaker CLI Tool"""
-    # Set logging level based on debug flag
     logging.basicConfig(
         level=logging.DEBUG if debug else logging.WARNING,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -48,13 +47,19 @@ def login():
 
 
 @login.command()
-@click.option('--username', prompt=True, help="Username (email or phone)")
-@click.option('--password', prompt=True, hide_input=True, help="User password")
+@click.option('--username', help="Username (email or phone)")
+@click.option('--password', help="User password")
 @click.pass_context
 def user(ctx, username, password):
     """Login as regular user"""
+    if not username:
+        username = click.prompt("Username")
+    if not password:
+        password = click.prompt("Password", hide_input=True)
+
     result = ctx.obj['login_service'].login_user(username, password)
     click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+
 
 # Logout command
 @cli.command()
@@ -69,7 +74,6 @@ def logout(ctx):
 
 
 # User commands
-# Top-level create command group
 @cli.group()
 def create():
     """Create different types of users"""
@@ -77,22 +81,32 @@ def create():
 
 
 @create.command()
-@click.option('--username', prompt=True, help="Username (email or phone)")
-@click.option('--password', prompt=True, hide_input=True, help="Password")
+@click.option('--username', help="Username (email or phone)")
+@click.option('--password', help="Password")
 @click.option('--locale', default="no_locale", help="Locale preference")
 @click.pass_context
 def user(ctx, username, password, locale):
     """Create a regular user account"""
+    if not username:
+        username = click.prompt("Username")
+    if not password:
+        password = click.prompt("Password", hide_input=True)
+
     result = ctx.obj['user_service'].create_user(username, password)
     click.echo(f"User created: {result}")
 
 
 @create.command()
-@click.option('--username', prompt=True, help="Admin username (email)")
-@click.option('--quota', type=int, prompt=True, help="Admin quota (required)")
+@click.option('--username', help="Admin username (email)")
+@click.option('--quota', type=int, help="Admin quota")
 @click.pass_context
 def admin(ctx, username, quota):
     """Create an admin user account"""
+    if not username:
+        username = click.prompt("Username")
+    if quota is None:
+        quota = click.prompt("Quota", type=int)
+
     result = ctx.obj['admin_service'].create_admin(
         user_name=username,
         quota=quota
@@ -101,10 +115,13 @@ def admin(ctx, username, quota):
 
 
 @create.command()
-@click.option('--username', prompt=True, help="Superadmin username (email)")
+@click.option('--username', help="Superadmin username (email)")
 @click.pass_context
 def superadmin(ctx, username):
     """Create a superadmin user account"""
+    if not username:
+        username = click.prompt("Username")
+
     result = ctx.obj['admin_service'].create_superadmin(
         user_name=username
     )
@@ -119,12 +136,17 @@ def user():
 
 
 @user.command()
-@click.option('--username', prompt=True, help="Username used during signup")
-@click.option('--verification-code', prompt=True, help="Verification code received via email/SMS")
+@click.option('--username', help="Username used during signup")
+@click.option('--verification-code', help="Verification code received via email/SMS")
 @click.option('--locale', default="no_locale", help="Locale preference")
 @click.pass_context
 def confirm(ctx, username, verification_code, locale):
     """Confirm a new user account with verification code"""
+    if not username:
+        username = click.prompt("Username")
+    if not verification_code:
+        verification_code = click.prompt("Verification code")
+
     result = ctx.obj['user_service'].confirm_user(
         username=username,
         verification_code=verification_code,
@@ -166,13 +188,16 @@ def list_users(ctx, username, all_users, admin, superadmin):
 
 
 @admin.command()
-@click.option('--username', prompt=True, help="Username to update")
+@click.option('--username', help="Username to update")
 @click.option('--quota', type=int, help="New quota value")
 @click.option('--admin', is_flag=True, help="Set as admin")
 @click.option('--superadmin', is_flag=True, help="Set as superadmin")
 @click.pass_context
 def update_user(ctx, username, quota, admin, superadmin):
     """Update user details"""
+    if not username:
+        username = click.prompt("Username")
+
     payload = {}
     if quota is not None:
         payload['quota'] = quota
@@ -189,10 +214,13 @@ def update_user(ctx, username, quota, admin, superadmin):
 
 
 @admin.command()
-@click.option('--username', prompt=True, help="Username to delete")
+@click.option('--username', help="Username to delete")
 @click.pass_context
 def delete_user(ctx, username):
     """Delete a user account"""
+    if not username:
+        username = click.prompt("Username")
+
     result = ctx.obj['admin_service'].delete_admin_user(user_name=username)
     click.echo(f"User deleted: {prettify(result)}")
 
@@ -221,13 +249,10 @@ def image():
 def upload(ctx, base64, file, name, version, model, type):
     """Upload a new OTA image (uses switch.bin if no --base64 or --file provided)"""
     ota_service = ctx.obj['ota_image_service']
-
-    # Default file path (adjust based on your project structure)
     DEFAULT_BIN = os.path.join(os.path.dirname(__file__), '..', 'switch.bin')
 
     try:
         if file:
-            # Handle .bin file upload
             result = ota_service.upload_image(
                 bin_file_path=file,
                 image_name=name,
@@ -236,7 +261,6 @@ def upload(ctx, base64, file, name, version, model, type):
                 type=type
             )
         elif base64:
-            # Handle direct base64 upload
             result = ota_service.upload_image(
                 base64_fwimage=base64,
                 image_name=name,
@@ -245,7 +269,6 @@ def upload(ctx, base64, file, name, version, model, type):
                 type=type
             )
         else:
-            # Fallback to default switch.bin
             if os.path.exists(DEFAULT_BIN):
                 click.echo("No firmware provided - using default switch.bin")
                 result = ota_service.upload_image(
@@ -283,20 +306,26 @@ def list(ctx, image_id, image_name, contains):
 
 
 @image.command()
-@click.option('--image-id', prompt=True, help="Image ID to delete")
+@click.option('--image-id', help="Image ID to delete")
 @click.pass_context
 def delete(ctx, image_id):
     """Delete an OTA image"""
+    if not image_id:
+        image_id = click.prompt("Image ID")
+
     result = ctx.obj['ota_image_service'].delete_image(image_id)
     click.echo(f"Image deleted: {prettify(result)}")
 
 
 @image.command()
-@click.option('--image-id', prompt=True, help="Image ID to archive/unarchive")
+@click.option('--image-id', help="Image ID to archive/unarchive")
 @click.option('--unarchive', is_flag=True, help="Unarchive instead of archive")
 @click.pass_context
 def archive(ctx, image_id, unarchive):
     """Archive or unarchive an OTA image"""
+    if not image_id:
+        image_id = click.prompt("Image ID")
+
     result = ctx.obj['ota_image_service'].archive_image(
         ota_image_id=image_id,
         archive=not unarchive
@@ -312,8 +341,8 @@ def job():
 
 
 @job.command()
-@click.option('--name', prompt=True, help="OTA job name")
-@click.option('--image-id', prompt=True, help="OTA image ID")
+@click.option('--name', help="OTA job name")
+@click.option('--image-id', help="OTA image ID")
 @click.option('--description', default="Default OTA job description", help="Job description")
 @click.option('--nodes', help="Node IDs (comma-separated for multiple nodes)")
 @click.option('--priority', type=int, default=5, help="Job priority (1-10, default:5)")
@@ -327,7 +356,11 @@ def job():
 def create(ctx, name, image_id, description, nodes, priority, timeout,
            force, approval, notify, continuous, serialized):
     """Create a new OTA job"""
-    # Convert comma-separated nodes to list if provided
+    if not name:
+        name = click.prompt("Job name")
+    if not image_id:
+        image_id = click.prompt("Image ID")
+
     node_list = nodes.split(',') if nodes else None
 
     result = ctx.obj['ota_job_service'].create_job(
@@ -366,11 +399,14 @@ def list(ctx, job_id, job_name, image_id, archived, all):
 
 
 @job.command()
-@click.option('--job-id', prompt=True, help="Job ID to update")
+@click.option('--job-id', help="Job ID to update")
 @click.option('--archive', is_flag=True, help="Archive instead of cancel")
 @click.pass_context
 def update(ctx, job_id, archive):
     """Cancel or archive an OTA job"""
+    if not job_id:
+        job_id = click.prompt("Job ID")
+
     result = ctx.obj['ota_job_service'].update_job(
         ota_job_id=job_id,
         archive=archive
@@ -380,10 +416,13 @@ def update(ctx, job_id, archive):
 
 
 @job.command()
-@click.option('--job-id', prompt=True, help="Job ID to check status")
+@click.option('--job-id', help="Job ID to check status")
 @click.pass_context
 def status(ctx, job_id):
     """Get OTA job status"""
+    if not job_id:
+        job_id = click.prompt("Job ID")
+
     result = ctx.obj['ota_job_service'].get_job_status(job_id)
     click.echo(f"Job status: {prettify(result)}")
 
@@ -400,15 +439,10 @@ def node():
 def list_nodes(ctx):
     """List all nodes associated with the user"""
     try:
-        # This returns a dict like {'nodes': [...], 'total': 2}
-        response = ctx.obj['node_service'].get_user_nodes(raw=True)  # <-- explained below
-
-        # Print raw JSON output
+        response = ctx.obj['node_service'].get_user_nodes(raw=True)
         click.echo(json.dumps(response, indent=4))
-
     except Exception as e:
         click.echo(f"Error listing nodes: {str(e)}", err=True)
-
 
 
 @node.command()
@@ -422,7 +456,6 @@ def config(ctx, node_id):
             click.echo(f"No configuration found for node {node_id}")
             return
 
-        import json
         click.echo(json.dumps(config, indent=2))
     except Exception as e:
         click.echo(f"Error getting config: {str(e)}", err=True)
@@ -451,7 +484,6 @@ def update(ctx, node_id, tags, metadata):
     try:
         metadata_dict = {}
         if metadata:
-            import json
             with open(metadata) as f:
                 metadata_dict = json.load(f)
 
@@ -480,6 +512,11 @@ def delete_tags(ctx, node_id, tags):
     except Exception as e:
         click.echo(f"Error removing tags: {str(e)}", err=True)
 
+
+@node.command()
+@click.option('--node-id', required=True, help="Node ID to map/unmap")
+@click.option('--secret-key', required=True, help="Secret key for the node")
+@click.option('--operation', type=click.Choice(['map', 'unmap']), required=True, help="Operation to perform")
 @click.pass_context
 def map(ctx, node_id, secret_key, operation):
     """Map or unmap a node to the user"""
@@ -498,6 +535,7 @@ def map(ctx, node_id, secret_key, operation):
     except Exception as e:
         click.echo(f"Error mapping node: {str(e)}", err=True)
 
+
 @node.command()
 @click.option('--request-id', required=True, help="Request ID from mapping operation")
 @click.pass_context
@@ -508,7 +546,6 @@ def mapping_status(ctx, request_id):
         click.echo(f"Mapping status: {prettify(status)}")
     except Exception as e:
         click.echo(f"Error getting mapping status: {str(e)}", err=True)
-
 
 
 # Node admin commands
@@ -532,7 +569,6 @@ def admin():
 def admin_list_nodes(ctx, **filters):
     """List nodes with admin privileges (supports filtering)"""
     try:
-        # Remove None values from filters
         filters = {k: v for k, v in filters.items() if v is not None}
         nodes = ctx.obj['node_admin_service'].get_admin_nodes(**filters)
 
@@ -540,7 +576,6 @@ def admin_list_nodes(ctx, **filters):
             click.echo("No nodes found matching criteria")
             return
 
-        from tabulate import tabulate
         table = []
         for node in nodes:
             table.append([
@@ -564,6 +599,8 @@ def admin_list_nodes(ctx, **filters):
 def email():
     """Email operations for testing"""
     pass
+
+
 @email.command()
 @click.pass_context
 def generate(ctx):
@@ -577,7 +614,7 @@ def generate(ctx):
         click.echo(f"Error generating email: {str(e)}", err=True)
         raise click.Abort()
 
-# Verify email
+
 @email.command()
 @click.option('--email', help="Email address to verify (uses last generated if not specified)")
 @click.pass_context
@@ -599,8 +636,6 @@ def verify(ctx, email):
     except Exception as e:
         click.echo(f"Error verifying email: {str(e)}", err=True)
         raise click.Abort()
-
-
 
 
 if __name__ == '__main__':
