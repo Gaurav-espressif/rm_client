@@ -45,13 +45,11 @@ def get_base_url(api_type: str = "http") -> str:
 
     config = load_config()
     urls = {
-        "http": config['environments']['http_base_url'],
-        "rest": config['environments']['rest_base_url']
+        "http": config['environments']['http_base_url']
     }
 
     # Cache the values
     _base_urls["http"] = urls["http"]
-    _base_urls["rest"] = urls["rest"]
 
     return urls.get(api_type.lower(), urls["http"])
 

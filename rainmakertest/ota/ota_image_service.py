@@ -39,7 +39,7 @@ class OTAService:
             base64_fwimage = self._file_to_base64(bin_file_path)
         elif not base64_fwimage:
             if os.path.exists(self.default_bin_path):
-                print(f"\n⚠No firmware provided. Using default file: {self.default_bin_path}")
+                print(f"\nNo firmware provided. Using default file: {self.default_bin_path}")
                 base64_fwimage = self._file_to_base64(self.default_bin_path)
             else:
                 return {

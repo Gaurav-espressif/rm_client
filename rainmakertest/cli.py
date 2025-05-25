@@ -73,11 +73,15 @@ def user(ctx, username, password):
 def logout(ctx):
     """Logout current user by clearing tokens"""
     try:
-        ctx.obj['api_client'].clear_token()
-        click.echo("✓ Successfully logged out")
-    except Exception as e:
-        click.echo(f"✗ Logout failed: {str(e)}")
+        api_client = ctx.obj['api_client']
 
+        # Clear client-side tokens
+        api_client.clear_token()
+
+        click.echo("Successfully logged out")
+    except Exception as e:
+        click.echo(f"Logout failed: {str(e)}")
+        raise click.Abort()
 
 # User commands
 @cli.group()
