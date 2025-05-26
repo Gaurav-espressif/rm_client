@@ -8,11 +8,26 @@ setup(
         'rainmakertest': ['*.json', 'templates/*.json'],
     },
     install_requires=[
-        "click>=8.0",
-        "requests>=2.26",
-        "tabulate>=0.8.9",
-        "mailosaur",
-        "beautifulsoup4>=4.9.3"
+        "bs4~=0.0.2",
+        "beautifulsoup4~=4.13.4",
+        "soupsieve~=2.7",
+        "typing_extensions~=4.13.2",
+        "pip~=23.2.1",
+        "cryptography~=45.0.2",
+        "mailosaur~=7.19.0",
+        "certifi~=2025.4.26",
+        "tzlocal~=5.3.1",
+        "urllib3~=2.4.0",
+        "six~=1.17.0",
+        "python-dateutil~=2.9.0.post0",
+        "idna~=3.10",
+        "charset-normalizer~=3.4.1",
+        "requests~=2.32.3",
+        "PyJWT==2.8.0",
+        "click~=8.1.8",
+        "tabulate>=0.9.0",
+        "pydantic>=2.0.0",
+        "setuptools>=65.0.0"
     ],
     entry_points={
         'console_scripts': [

@@ -1,0 +1,12 @@
+{
+    "environments": {
+        "http_base_url": "https://api.rainmaker.espressif.com"
+    },
+    "session": {
+        "created_at": "2025-05-26T15:39:43.589014",
+        "last_used": "2025-05-26T15:39:46.202858",
+        "username": "gaurav.singh09068@gmail.com",
+        "password": "Gaurav@123",
+        "access_token": "eyJraWQiOiJxK0Y2Nkk1eE1nOWo2d2pQOWU1c05IeDF2VENVMDVqYjRJTm9cL0Izb1l0VT0iLCJhbGciOiJSUzI1NiJ9.eyJzdWIiOiI0MGZlNjM1Yi1lMTUyLTQ5YjYtOWZlZS00ZjY1NTQ0MTM5NzMiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9MOXU0UzBOMWkiLCJjbGllbnRfaWQiOiIxaDd1anFqczgxNDBuMTd2MGFoYjRuNTFtMiIsIm9yaWdpbl9qdGkiOiIwMDliYTFiOC00OTllLTQ5ZTItYmVlYS1kMzBmODQyY2QyNWIiLCJldmVudF9pZCI6ImU1M2U3MjBmLTM1ZDAtNGRmYy05OTlkLWRkZmRiOGEwMTIzMiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3NDgyNzM5ODYsImV4cCI6MTc0ODI3NzU4NiwiaWF0IjoxNzQ4MjczOTg2LCJqdGkiOiIzNTgxZDBiOS0xMGQyLTQ5ZjktYWYxNy03YzVjNDA0MGQ1YzIiLCJ1c2VybmFtZSI6IjQwZmU2MzViLWUxNTItNDliNi05ZmVlLTRmNjU1NDQxMzk3MyJ9.mAsKJ0sjstnE_XIXxhGPt_Pu3_t6u5Tlj-rFmWaKk5LHK98nof20U5GjhIMdY5fi9TXfCjXjzZn-hM5_om0E-XRMCtcbxrKbFsxsaIw_nzcSK2mYJGTGTl3LAVrVp-V5NeXvIkcjagu9ZLTzzdfIUmr-Jbm98Yd55lkEvCq3IrNedUjmiX5bYdujJOrTLgmCKt5RK4eImgiSEzRSy7f-n1ogvGm0I24ZAUxYUEvLKTYjleOH_ETWtHLnUIuoGmWK5q2fqbuSK8cxZLRFlAQgn_LKjh2dSAHLtlhdZukxEgg-TL4krVhkHBbi4xsAhUuNdGRaZlG2yzOj8eB2vyvwlg"
+    }
+}

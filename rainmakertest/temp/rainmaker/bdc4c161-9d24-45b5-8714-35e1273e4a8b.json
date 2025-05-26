@@ -1,0 +1,12 @@
+{
+    "environments": {
+        "http_base_url": "https://aqu8wbfoc7.execute-api.us-east-1.amazonaws.com/dev"
+    },
+    "session": {
+        "created_at": "2025-05-26T15:43:05.710529",
+        "last_used": "2025-05-26T15:43:07.205274",
+        "username": "sachin.bhalake@espressif.com",
+        "password": "PwtsYC1}DS",
+        "access_token": "eyJraWQiOiJtRjRXRytpVWg2QlZwWDF5VzZoaXNZMklkR1U0V0YxSXQrRmZJNmVPcmhJPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiI4NDA4ZTQ1OC1hMGMxLTcwZDEtNDBmMi0zNzFjODNlZjM0YTIiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtZWFzdC0xLmFtYXpvbmF3cy5jb21cL3VzLWVhc3QtMV9sUWU2RUtUUGwiLCJjbGllbnRfaWQiOiJvdDg0NHRjZXM0NzJjMnIxMmNwZjg4Ym0iLCJvcmlnaW5fanRpIjoiNmZjMTVkOGQtMDY5YS00Y2E0LThiNzgtMjU3Yjg3YTcyNzBlIiwiZXZlbnRfaWQiOiIxOGMzZDVlNy1iYzk0LTQ2N2ItOWQxZC1lNWJiNTBkNjA2ZTIiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIiwiYXV0aF90aW1lIjoxNzQ4Mjc0MTg3LCJleHAiOjE3NDgyNzc3ODYsImlhdCI6MTc0ODI3NDE4NywianRpIjoiMThhMzJlMWEtM2E4OS00MzMwLWJkMWMtOWMzYWM3ODc5NjI1IiwidXNlcm5hbWUiOiI4NDA4ZTQ1OC1hMGMxLTcwZDEtNDBmMi0zNzFjODNlZjM0YTIifQ.XLoyAGOIkqYlFFoQ4fcPm4ihOAvO-3o6K9utxHdQ72JphUkVW5WEfkVQ-68LpZzw-SEPCStNr9mIbFdeKmY-_PXR_DBaQRSsDOE-0i_8bxFc4ZqfwgWjGcBQoN4reAtj9NMgv0QtBnn2ynHdDg06ykj6mn6Yd-_VCCUOe1Sgb2PJjp5IEI3HdPbiSjpov7XIMDCulQ9cjSAI6IXJJca5trpudtdWERFfrCOTr7vV64JloyxWowWePvliLOAeQ-pXYX95OofVko9m4Y8NvusvimtUVZ43SX0uSsVmd5J36Buia1TKJt31bHb3MzHY164oJcK1vA3YOWi4Ti1-r4YGcg"
+    }
+}
