@@ -8,7 +8,7 @@ class UserService:
 
     def create_user(self, user_name: str, password: str, locale: str = "no_locale") -> Dict:
         """Create a new user account"""
-        endpoint = "/v1/user"
+        endpoint = "/v1/user2"
         params = {"locale": locale} if locale != "no_locale" else None
         payload = {
             "user_name": user_name,
@@ -16,11 +16,11 @@ class UserService:
         }
         print(f"Creating user with payload: {payload}")
         # Add authenticate=False to disable token requirement
-        return self.api_client.post(endpoint, data=payload, params=params, authenticate=False)
+        return self.api_client.post(endpoint, data=payload, authenticate=False)
 
     def confirm_user(self, username: str, verification_code: str, locale: str = "no_locale") -> Dict:
         """Confirm user account with verification code"""
-        endpoint = "/v1/user"
+        endpoint = "/v1/user2"
         params = {"locale": locale} if locale != "no_locale" else None
         payload = {
             "user_name": username,
