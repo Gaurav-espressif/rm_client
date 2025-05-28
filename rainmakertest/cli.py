@@ -60,21 +60,31 @@ def cli(ctx, debug, config):
             # Create API client without config_id to use default config.json/token.json
             api_client = ApiClient()
             
-            # Verify if we have a valid token
-            if not api_client.config_manager.get_token():
-                raise ValueError("No valid token found")
-                
-            ctx.obj['api_client'] = api_client
-            ctx.obj['login_service'] = LoginService(api_client)
-            ctx.obj['user_service'] = UserService(api_client)
-            ctx.obj['admin_service'] = AdminUserService(api_client)
-            ctx.obj['ota_image_service'] = OTAService(api_client)
-            ctx.obj['ota_job_service'] = OTAJobService(api_client)
-            ctx.obj['node_service'] = NodeService(api_client)
-            ctx.obj['node_admin_service'] = NodeAdminService(api_client)
+            # Skip token verification for commands that do not require login
+            if ctx.invoked_subcommand in ['create', 'email', 'server', 'user']:
+                ctx.obj['api_client'] = api_client
+                ctx.obj['login_service'] = LoginService(api_client)
+                ctx.obj['user_service'] = UserService(api_client)
+                ctx.obj['admin_service'] = AdminUserService(api_client)
+                ctx.obj['ota_image_service'] = OTAService(api_client)
+                ctx.obj['ota_job_service'] = OTAJobService(api_client)
+                ctx.obj['node_service'] = NodeService(api_client)
+                ctx.obj['node_admin_service'] = NodeAdminService(api_client)
+            else:
+                # Verify if we have a valid token for other commands
+                if not api_client.config_manager.get_token():
+                    raise ValueError("No valid token found")
+                ctx.obj['api_client'] = api_client
+                ctx.obj['login_service'] = LoginService(api_client)
+                ctx.obj['user_service'] = UserService(api_client)
+                ctx.obj['admin_service'] = AdminUserService(api_client)
+                ctx.obj['ota_image_service'] = OTAService(api_client)
+                ctx.obj['ota_job_service'] = OTAJobService(api_client)
+                ctx.obj['node_service'] = NodeService(api_client)
+                ctx.obj['node_admin_service'] = NodeAdminService(api_client)
         except (FileNotFoundError, ValueError) as e:
             # Only raise error for non-login commands
-            if ctx.invoked_subcommand != 'login':
+            if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user']:
                 click.echo("Please login first using 'rmcli login user'")
                 raise click.Abort()
             # For login command, create a basic API client without config
