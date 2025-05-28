@@ -3,6 +3,7 @@ import re
 import time
 from bs4 import BeautifulSoup
 import random
+import os
 try:
     from mailosaur import MailosaurClient
 except ImportError:
@@ -13,9 +14,13 @@ except ImportError:
 
 class EmailService:
     def __init__(self):
-        self.api_key = "GiK6loPqffzz84xt"
-        self.server_id = "rhgabfsb"
-        self.server_domain = "rhgabfsb.mailosaur.net"
+        self.api_key = os.getenv('MAILOSAUR_API_KEY', '')
+        self.server_id = os.getenv('MAILOSAUR_SERVER_ID', '')
+        self.server_domain = os.getenv('MAILOSAUR_SERVER_DOMAIN', '')
+        
+        if not all([self.api_key, self.server_id, self.server_domain]):
+            raise ValueError("Missing required environment variables: MAILOSAUR_API_KEY, MAILOSAUR_SERVER_ID, MAILOSAUR_SERVER_DOMAIN")
+            
         try:
             self.client = MailosaurClient(self.api_key)
         except Exception as e:

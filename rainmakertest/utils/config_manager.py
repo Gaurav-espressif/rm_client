@@ -58,24 +58,39 @@ class ConfigManager:
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-        with open(config_path, 'r') as f:
-            config = json.load(f)
-            self.logger.debug(f"Loaded config from {config_path}")
-            
-            # Validate config structure
-            self._validate_config(config)
-            
-            # If using default config, try to load token from token.json
-            if not self.config_id:
-                token_path = self._get_token_path()
-                if token_path.exists():
-                    with open(token_path, 'r') as tf:
-                        token_data = json.load(tf)
-                        if 'session' not in config:
-                            config['session'] = {}
-                        config['session']['access_token'] = token_data.get('access_token')
-            
-            return config
+        try:
+            with open(config_path, 'r') as f:
+                try:
+                    config = json.load(f)
+                    self.logger.debug(f"Loaded config from {config_path}")
+                except json.JSONDecodeError as e:
+                    self.logger.error(f"Invalid JSON in config file {config_path}: {e}")
+                    raise ValueError(f"Invalid JSON format in configuration file: {e}")
+                
+                # Validate config structure
+                try:
+                    self._validate_config(config)
+                except ValueError as e:
+                    self.logger.error(f"Invalid config structure: {e}")
+                    raise
+                
+                # If using default config, try to load token from token.json
+                if not self.config_id:
+                    token_path = self._get_token_path()
+                    if token_path.exists():
+                        try:
+                            with open(token_path, 'r') as tf:
+                                token_data = json.load(tf)
+                                if 'session' not in config:
+                                    config['session'] = {}
+                                config['session']['access_token'] = token_data.get('access_token')
+                        except (json.JSONDecodeError, IOError) as e:
+                            self.logger.warning(f"Failed to load token file: {e}")
+                
+                return config
+        except IOError as e:
+            self.logger.error(f"Failed to read config file {config_path}: {e}")
+            raise RuntimeError(f"Failed to read configuration file: {e}")
 
     def _save_config(self) -> None:
         """Save configuration to file with atomic write."""
@@ -138,6 +153,16 @@ class ConfigManager:
         if not token:
             raise ValueError("Token cannot be empty")
 
+        # For default case (no config_id), only update token.json
+        if not self.config_id:
+            token_path = self._get_token_path()
+            token_data = {'access_token': token}
+            with open(token_path, 'w') as f:
+                json.dump(token_data, f, indent=4)
+            os.chmod(token_path, 0o600)
+            return
+
+        # For custom endpoint case, update the UUID config file
         config = self._load_config()
         if 'session' not in config:
             config['session'] = {}

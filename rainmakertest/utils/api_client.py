@@ -148,6 +148,14 @@ class ApiClient:
         
         headers = self._get_headers(authenticate)
         
+        # --- DEBUG LOGGING ---
+        self.logger.debug("POST Request:")
+        self.logger.debug(f"URL: {url}")
+        self.logger.debug(f"Headers: {headers}")
+        self.logger.debug(f"Params: {params}")
+        self.logger.debug(f"Payload: {json or data}")
+        # ---------------------
+        
         try:
             response = requests.post(
                 url, 
@@ -165,7 +173,7 @@ class ApiClient:
             }
 
     def put(self, endpoint: str, data: Optional[Dict[str, Any]] = None, json: Optional[Dict[str, Any]] = None, 
-            authenticate: bool = True) -> Dict[str, Any]:
+            params: Optional[Dict[str, Any]] = None, authenticate: bool = True) -> Dict[str, Any]:
         """Make a PUT request to the API."""
         config = self._load_config()
         base_url = config['environments']['http_base_url']
@@ -173,11 +181,20 @@ class ApiClient:
         
         headers = self._get_headers(authenticate)
         
+        # --- DEBUG LOGGING ---
+        self.logger.debug("PUT Request:")
+        self.logger.debug(f"URL: {url}")
+        self.logger.debug(f"Headers: {headers}")
+        self.logger.debug(f"Params: {params}")
+        self.logger.debug(f"Payload: {json or data}")
+        # ---------------------
+        
         try:
             response = requests.put(
                 url, 
                 headers=headers, 
-                json=json or data
+                json=json or data,
+                params=params
             )
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:
@@ -188,7 +205,7 @@ class ApiClient:
                 "error_code": 500
             }
 
-    def delete(self, endpoint: str, authenticate: bool = True) -> Dict[str, Any]:
+    def delete(self, endpoint: str, json: Optional[Dict[str, Any]] = None, params: Optional[Dict[str, Any]] = None, authenticate: bool = True) -> Dict[str, Any]:
         """Make a DELETE request to the API."""
         config = self._load_config()
         base_url = config['environments']['http_base_url']
@@ -199,7 +216,9 @@ class ApiClient:
         try:
             response = requests.delete(
                 url, 
-                headers=headers
+                headers=headers, 
+                json=json,
+                params=params
             )
             return self._handle_response(response)
         except requests.exceptions.RequestException as e:

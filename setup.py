@@ -8,11 +8,9 @@ setup(
         'rainmakertest': ['*.json', 'templates/*.json'],
     },
     install_requires=[
-        "bs4~=0.0.2",
         "beautifulsoup4~=4.13.4",
         "soupsieve~=2.7",
         "typing_extensions~=4.13.2",
-        "pip~=23.2.1",
         "cryptography~=45.0.2",
         "mailosaur~=7.19.0",
         "certifi~=2025.4.26",
@@ -26,9 +24,9 @@ setup(
         "PyJWT==2.8.0",
         "click~=8.1.8",
         "tabulate>=0.9.0",
-        "pydantic>=2.0.0",
-        "setuptools>=65.0.0"
+        "pydantic>=2.0.0"
     ],
+    python_requires=">=3.8",
     entry_points={
         'console_scripts': [
             'rmcli=rainmakertest.cli:cli',

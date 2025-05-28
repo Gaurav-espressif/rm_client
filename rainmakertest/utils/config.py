@@ -3,14 +3,20 @@ import os
 from typing import Dict, Any, Optional
 from pathlib import Path
 
-# Get the directory where this script (config.py) is located
-UTILS_DIR = os.path.dirname(os.path.abspath(__file__))
+def get_project_root() -> Path:
+    """Get the project root directory."""
+    # Start from the current file's directory
+    current_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+    # Navigate up to the project root (where setup.py is located)
+    while current_dir.name != 'rainmakertest' and current_dir.parent != current_dir:
+        current_dir = current_dir.parent
+    return current_dir
 
-# Go up one level to reach the rainmakertest directory
-RAINMAKERTEST_DIR = os.path.dirname(UTILS_DIR)
+# Get the project root directory
+PROJECT_ROOT = get_project_root()
 
-# Define the absolute path to config.json (now in rainmakertest/)
-CONFIG_FILE = os.path.join(RAINMAKERTEST_DIR, "config.json")
+# Define the path to config.json relative to project root
+CONFIG_FILE = PROJECT_ROOT / "config.json"
 
 # Default public URLs
 DEFAULT_PUBLIC_URLS = {
@@ -26,12 +32,17 @@ _base_urls = {
 }
 
 def load_config() -> Dict[str, Any]:
-    """Load configuration from config.json using absolute path"""
-    if not os.path.exists(CONFIG_FILE):
+    """Load configuration from config.json"""
+    if not CONFIG_FILE.exists():
         raise FileNotFoundError(f"Config file not found at: {CONFIG_FILE}")
 
-    with open(CONFIG_FILE, 'r') as f:
-        return json.load(f)
+    try:
+        with open(CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in config file: {e}")
+    except IOError as e:
+        raise RuntimeError(f"Failed to read config file: {e}")
 
 
 def get_base_url(api_type: str = "http") -> str:
