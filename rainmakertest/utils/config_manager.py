@@ -150,12 +150,13 @@ class ConfigManager:
 
     def update_token(self, token: str) -> None:
         """Update the access token in the configuration"""
-        if not token:
-            raise ValueError("Token cannot be empty")
-
         # For default case (no config_id), only update token.json
         if not self.config_id:
             token_path = self._get_token_path()
+            if not token:  # If clearing token (logout)
+                if token_path.exists():
+                    token_path.unlink()  # Delete the token file
+                return
             token_data = {'access_token': token}
             with open(token_path, 'w') as f:
                 json.dump(token_data, f, indent=4)
