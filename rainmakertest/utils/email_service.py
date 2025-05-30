@@ -13,13 +13,35 @@ except ImportError:
 
 
 class EmailService:
+    # Default Mailosaur credentials
+    DEFAULT_API_KEY = "GiK6loPqffzz84xt"
+    DEFAULT_SERVER_ID = "rhgabfsb"
+    DEFAULT_SERVER_DOMAIN = "rhgabfsb.mailosaur.net"
+
     def __init__(self):
-        self.api_key = os.getenv('MAILOSAUR_API_KEY', '')
-        self.server_id = os.getenv('MAILOSAUR_SERVER_ID', '')
-        self.server_domain = os.getenv('MAILOSAUR_SERVER_DOMAIN', '')
+        # Try to get from environment variables first, fall back to defaults
+        self.api_key = os.getenv('MAILOSAUR_API_KEY', self.DEFAULT_API_KEY)
+        self.server_id = os.getenv('MAILOSAUR_SERVER_ID', self.DEFAULT_SERVER_ID)
+        self.server_domain = os.getenv('MAILOSAUR_SERVER_DOMAIN', self.DEFAULT_SERVER_DOMAIN)
         
         if not all([self.api_key, self.server_id, self.server_domain]):
-            raise ValueError("Missing required environment variables: MAILOSAUR_API_KEY, MAILOSAUR_SERVER_ID, MAILOSAUR_SERVER_DOMAIN")
+            missing_vars = []
+            if not self.api_key:
+                missing_vars.append('MAILOSAUR_API_KEY')
+            if not self.server_id:
+                missing_vars.append('MAILOSAUR_SERVER_ID')
+            if not self.server_domain:
+                missing_vars.append('MAILOSAUR_SERVER_DOMAIN')
+            
+            error_msg = (
+                f"Missing required environment variables: {', '.join(missing_vars)}\n"
+                "Please set these environment variables:\n"
+                "1. MAILOSAUR_API_KEY: Your Mailosaur API key\n"
+                "2. MAILOSAUR_SERVER_ID: Your Mailosaur server ID\n"
+                "3. MAILOSAUR_SERVER_DOMAIN: Your Mailosaur server domain\n\n"
+                "You can get these values from your Mailosaur account at https://mailosaur.com/app/servers"
+            )
+            raise ValueError(error_msg)
             
         try:
             self.client = MailosaurClient(self.api_key)
