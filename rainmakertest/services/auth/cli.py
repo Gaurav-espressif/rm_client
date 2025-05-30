@@ -102,10 +102,24 @@ def user(ctx, username, password, endpoint):
 def logout(ctx):
     """Logout current user by clearing tokens"""
     try:
+        # Get the API client from context
         api_client = ctx.obj['api_client']
+        
+        # Get current token before clearing
+        token = api_client.config_manager.get_token()
+        if not token:
+            click.echo("No active token found")
+            return
+
+        # Get config ID before clearing
+        config_id = api_client.config_id
 
         # Clear client-side tokens
         api_client.clear_token()
+
+        # If using a specific config (UUID), delete the config file
+        if config_id:
+            api_client.config_manager.delete_config(config_id)
 
         click.echo("Successfully logged out")
     except Exception as e:
