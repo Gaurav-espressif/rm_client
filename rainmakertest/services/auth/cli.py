@@ -24,6 +24,25 @@ def user(ctx, username, password, endpoint):
     # Create config manager
     config_manager = ConfigManager()
 
+    # Check if we're using a specific config (--config flag was used)
+    if hasattr(ctx, 'obj') and 'config_id' in ctx.obj:
+        # Using specific config, create API client with that config
+        api_client = ApiClient(config_id=ctx.obj['config_id'])
+        login_service = LoginService(api_client)
+        
+        # Update context with new instances
+        ctx.obj['api_client'] = api_client
+        ctx.obj['login_service'] = login_service
+
+        # Attempt login
+        result = login_service.login_user(username, password)
+
+        if result.get("status") == "success":
+            click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+        else:
+            click.echo(f"Login failed: {result.get('message', 'Unknown error')}")
+        return
+
     # Handle default case (no endpoint provided)
     if not endpoint:
         try:
