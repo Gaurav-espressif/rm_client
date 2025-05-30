@@ -11,11 +11,10 @@ def email():
 @email.command()
 @click.pass_context
 def generate(ctx):
-    """Generate a new email verification code"""
+    """Generate a new random email address"""
     email_service = EmailService()
     email_address = email_service.generate_random_email()
-    result = email_service.get_verification_code(email_address)
-    click.echo(f"Verification code generated for {email_address}: {result}")
+    click.echo(f"Email address generated: {email_address}")
 
 @email.command()
 @click.option('--email', help="Email address to verify (uses last generated if not specified)")
