@@ -107,28 +107,30 @@ class EmailService:
 
         return None
 
-    def _read_email(self, email_address, max_emails=5, max_pages=5):
-        """Read emails from the mailbox"""
+    def _read_email(self, email_address, max_emails=1, max_pages=1):
+        """Read emails from the mailbox, optimized for getting the most recent email"""
         try:
-            all_messages = []
-            items_per_page = 50
+            # Get only the most recent messages first
+            messages = self.client.messages.list(
+                self.server_id,
+                page=0,  # First page only
+                items_per_page=10,  # Limit to 10 most recent messages
+                received_after=None  # Get all messages regardless of age
+            )
 
-            for page in range(max_pages):
-                messages = self.client.messages.list(self.server_id, page=page, items_per_page=items_per_page)
-                if not messages.items:
-                    break
+            if not messages.items:
+                return {}
 
-                all_messages.extend(messages.items)
-
-                if len(messages.items) < items_per_page:
-                    break
-
+            # Filter messages for the specific email address
             filtered_messages = [
-                msg for msg in all_messages
+                msg for msg in messages.items
                 if email_address in [to.email for to in msg.to]
             ]
 
+            # Sort by received time, most recent first
             filtered_messages.sort(key=lambda x: x.received, reverse=True)
+            
+            # Take only the most recent email
             filtered_messages = filtered_messages[:max_emails]
 
             email_dict = {}
