@@ -96,14 +96,16 @@ def update(ctx, node_id, tags):
         click.echo(json.dumps(output, indent=2))
 
 @node.command()
-@click.option('--node-id', help="Node ID to map")
+@click.option('--node-id', required=True, help="Node ID to map")
+@click.option('--secret-key', required=True, help="Secret key for the node")
 @click.option('--unmap', is_flag=True, help="Unmap instead of map")
 @click.pass_context
-def map(ctx, node_id, unmap):
+def map(ctx, node_id, secret_key, unmap):
     """Map or unmap a node"""
     node_service = ctx.obj['node_service']
     try:
-        result = node_service.map_node(node_id, unmap)
+        operation = "unmap" if unmap else "map"
+        result = node_service.map_user_node(node_id, secret_key, operation)
         output = {
             "status": "success",
             "response": result,
@@ -119,14 +121,13 @@ def map(ctx, node_id, unmap):
         click.echo(json.dumps(output, indent=2))
 
 @node.command()
-@click.option('--node-id', required=True, help="Node ID to check mapping status")
 @click.option('--request-id', required=True, help="Request ID from the map operation")
 @click.pass_context
-def mapping_status(ctx, node_id, request_id):
+def mapping_status(ctx, request_id):
     """Check the status of a node mapping request"""
     node_service = ctx.obj['node_service']
     try:
-        result = node_service.get_mapping_status(node_id, request_id)
+        result = node_service.get_mapping_status(request_id)
         click.echo(json.dumps({
             "status": "success",
             "response": result,
