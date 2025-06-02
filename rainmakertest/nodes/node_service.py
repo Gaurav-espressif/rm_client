@@ -111,13 +111,57 @@ class NodeService:
         """Update node metadata or tags"""
         endpoint = "/v1/user/nodes"
         params = {"node_id": node_id}
-        return self.api_client.put(endpoint, json=metadata, params=params)
+        try:
+            # The API expects tags directly in the payload
+            payload = {
+                "tags": metadata.get("tags", [])
+            }
+            response = self.api_client.put(endpoint, json=payload, params=params)
+            if isinstance(response, dict) and response.get("status") == "failure":
+                return {
+                    "status": "error",
+                    "response": None,
+                    "error": response.get("message", "Unknown error")
+                }
+            return {
+                "status": "success",
+                "response": response,
+                "error": None
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "response": None,
+                "error": str(e)
+            }
 
     def delete_node_tags(self, node_id: str, tags: List[str]) -> Dict:
         """Delete tags from a node"""
         endpoint = "/v1/user/nodes"
         params = {"node_id": node_id}
-        return self.api_client.delete(endpoint, json={"tags": tags}, params=params)
+        try:
+            # The API expects tags in the same format for deletion
+            payload = {
+                "tags": tags
+            }
+            response = self.api_client.delete(endpoint, json=payload, params=params)
+            if isinstance(response, dict) and response.get("status") == "failure":
+                return {
+                    "status": "error",
+                    "response": None,
+                    "error": response.get("message", "Unknown error")
+                }
+            return {
+                "status": "success",
+                "response": response,
+                "error": None
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "response": None,
+                "error": str(e)
+            }
 
     def map_user_node(self, node_id: str, secret_key: str, operation: str) -> dict:
         if operation not in ['map', 'unmap']:
