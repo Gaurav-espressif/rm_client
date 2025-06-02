@@ -4,7 +4,13 @@ A powerful command-line interface tool for interacting with the Rainmaker platfo
 
 ## Table of Contents
 - [Setup](#setup)
+- [Architecture](#architecture)
+  - [Project Structure](#project-structure)
+  - [Core Components](#core-components)
+  - [Service Layer](#service-layer)
+  - [Configuration Management](#configuration-management)
 - [Command Reference](#command-reference)
+  - [Global Options](#global-options)
   - [Authentication Commands](#authentication-commands)
   - [User Management](#user-management)
   - [Node Management](#node-management)
@@ -21,6 +27,7 @@ A powerful command-line interface tool for interacting with the Rainmaker platfo
 ### Prerequisites
 - Python 3.7 or higher
 - pip (Python package installer)
+- Internet connection for API access
 
 ### Installation
 
@@ -40,11 +47,155 @@ The CLI tool uses configuration files stored in your home directory:
 - `~/.rainmaker/config.json` - For server configuration
 - `~/.rainmaker/token.json` - For authentication tokens
 
+## Architecture
+
+### Project Structure
+```
+rainmakertest/
+├── __init__.py
+├── cli.py                 # Main CLI entry point
+├── utils/                 # Utility modules
+│   ├── api_client.py     # HTTP client for API communication
+│   ├── config.py         # Configuration management
+│   ├── config_manager.py # Advanced config handling
+│   └── email_service.py  # Email service utilities
+├── services/             # CLI command implementations
+│   ├── auth/            # Authentication commands
+│   ├── user/            # User management
+│   ├── admin/           # Admin operations
+│   ├── node/            # Node management
+│   ├── ota/             # OTA update handling
+│   ├── email/           # Email services
+│   ├── server/          # Server management
+│   └── create/          # Project creation tools
+└── tests/               # Test suite
+```
+
+### Core Components
+
+#### CLI Entry Point (`cli.py`)
+- Implements the main command-line interface using Click
+- Handles command registration and routing
+- Manages global options and context
+- Initializes core services and dependencies
+
+#### API Client (`utils/api_client.py`)
+- Provides HTTP communication with the Rainmaker API
+- Handles authentication headers and tokens
+- Manages request/response lifecycle
+- Implements retry logic and error handling
+- Supports multiple HTTP methods (GET, POST, PUT, DELETE)
+
+#### Configuration Management (`utils/config.py`, `utils/config_manager.py`)
+- Manages configuration files and settings
+- Handles multiple configuration profiles
+- Provides secure token storage
+- Supports environment-specific settings
+
+### Service Layer
+
+#### Authentication Service
+- Handles user login/logout operations
+- Manages authentication tokens
+- Implements session management
+- Supports multiple authentication methods
+
+#### User Service
+- User account management
+- Profile updates
+- Password management
+- User preferences
+
+#### Node Service
+- Device discovery and management
+- Node status monitoring
+- Parameter control
+- Firmware management
+
+#### OTA Service
+- Firmware update management
+- Update job scheduling
+- Progress monitoring
+- Rollback handling
+
+#### Email Service
+- Email verification
+- Test email generation
+- Notification handling
+- Email template management
+
+#### Admin Service
+- Administrative operations
+- User management
+- System configuration
+- Access control
+
+### Configuration Management
+
+#### File Structure
+```
+~/.rainmaker/
+├── config.json           # Main configuration file
+├── token.json           # Authentication tokens
+└── logs/                # Application logs
+```
+
+#### Configuration Hierarchy
+1. Command-line arguments (highest priority)
+2. Environment variables
+3. User configuration file
+4. Default settings (lowest priority)
+
+#### Security Features
+- Secure token storage
+- Environment isolation
+- Configuration versioning
+- Backup and recovery
+
+### Communication Flow
+```
+User Input (CLI) → Command Parser → Service Layer → API Client → Rainmaker API
+     ↑                                   ↓
+     └───────────── Response ───────────┘
+```
+
+1. User enters command through CLI
+2. Command is parsed and validated
+3. Appropriate service is invoked
+4. Service uses API client for communication
+5. API client handles HTTP communication
+6. Response is processed and formatted
+7. Result is displayed to user
+
+### Error Handling
+- Comprehensive error catching
+- Detailed error messages
+- Debug logging
+- Retry mechanisms
+- Graceful degradation
+
+### Security Considerations
+- Secure token management
+- SSL/TLS verification
+- Configuration encryption
+- Access control
+- Audit logging
+
+### Extensibility
+The architecture is designed for easy extension:
+- Modular service structure
+- Plugin support
+- Custom command registration
+- Middleware capabilities
+- Event system
+
 ## Command Reference
 
 ### Global Options
-- `--debug`: Enable debug logging
+These options are available for all commands:
+- `--debug`: Enable debug logging for detailed output
 - `--config`: Specify a configuration ID (UUID) to use for the command
+- `--help`: Display help information for any command
 
 ### Authentication Commands
 
@@ -70,20 +221,41 @@ rmcli login user --username user@example.com --password secretpass
 rmcli login user --username user@example.com --password secretpass --endpoint https://custom.api.com
 ```
 
-Use Cases:
-- First-time user authentication
-- Switching between different server environments
-- Creating new configuration profiles
-
 #### Logout
 ```bash
 rmcli logout
 ```
 
-Use Cases:
-- Securely ending a session
-- Clearing authentication tokens
-- Switching between different user accounts
+Description: Logout current user by clearing tokens
+
+### User Management
+
+#### Create User
+```bash
+rmcli user create [OPTIONS]
+```
+
+Options:
+- `--username TEXT`: Username (email or phone)
+- `--password TEXT`: Password
+- `--locale TEXT`: Locale preference (default: "no_locale")
+
+#### Confirm User
+```bash
+rmcli user confirm [OPTIONS]
+```
+
+Options:
+- `--username TEXT`: Username used during signup
+- `--verification-code TEXT`: Verification code received via email/SMS
+- `--locale TEXT`: Locale preference (default: "no_locale")
+
+#### Get User Info
+```bash
+rmcli user info
+```
+
+Description: Get current user information
 
 ### Email Services
 
@@ -92,13 +264,7 @@ Use Cases:
 rmcli email generate
 ```
 
-Generates a random email address for testing purposes.
-
-Example:
-```bash
-rmcli email generate
-# Output: Email address generated: test_user_123@example.com
-```
+Description: Generate a new random email address
 
 #### Verify Email
 ```bash
@@ -108,217 +274,302 @@ rmcli email verify [OPTIONS]
 Options:
 - `--email TEXT`: Email address to verify (uses last generated if not specified)
 
-Examples:
-```bash
-# Verify last generated email
-rmcli email verify
-
-# Verify specific email
-rmcli email verify --email user@example.com
-```
-
-Use Cases:
-- Testing email verification flow
-- Retrieving verification codes
-- Automated testing of user registration
-
 ### Node Management
 
 #### List Nodes
 ```bash
-rmcli node list [OPTIONS]
-```
-
-Options:
-- `--status TEXT`: Filter nodes by status
-- `--type TEXT`: Filter nodes by type
-
-Examples:
-```bash
-# List all nodes
 rmcli node list
-
-# List online nodes
-rmcli node list --status online
-
-# List specific type of nodes
-rmcli node list --type esp32
 ```
 
-#### Node Information
+Description: List all nodes
+
+#### Node Status
 ```bash
-rmcli node info [OPTIONS]
+rmcli node status [OPTIONS]
 ```
 
 Options:
-- `--node-id TEXT`: ID of the node [required]
-- `--format TEXT`: Output format (json|table)
+- `--node-id TEXT`: Node ID to check status
 
-Examples:
+#### Node Configuration
 ```bash
-# Get node details
-rmcli node info --node-id node123
-
-# Get node details in JSON format
-rmcli node info --node-id node123 --format json
+rmcli node config [OPTIONS]
 ```
+
+Options:
+- `--node-id TEXT`: Node ID to get configuration
+
+#### Update Node
+```bash
+rmcli node update [OPTIONS]
+```
+
+Options:
+- `--node-id TEXT`: Node ID to update [required]
+- `--tags TEXT`: Comma-separated tags to add/update [required]
+
+#### Map Node
+```bash
+rmcli node map [OPTIONS]
+```
+
+Options:
+- `--node-id TEXT`: Node ID to map
+- `--unmap`: Unmap instead of map
+
+#### Check Mapping Status
+```bash
+rmcli node mapping-status [OPTIONS]
+```
+
+Options:
+- `--node-id TEXT`: Node ID to check mapping status [required]
+- `--request-id TEXT`: Request ID from the map operation [required]
+
+#### Delete Node Tags
+```bash
+rmcli node delete-tags [OPTIONS]
+```
+
+Options:
+- `--node-id TEXT`: Node ID to delete tags [required]
+- `--tags TEXT`: Comma-separated tags to delete [required]
 
 ### OTA Updates
 
-#### List OTA Images
+#### Image Operations
+
+##### Upload Image
 ```bash
-rmcli ota list-images [OPTIONS]
+rmcli ota image upload [OPTIONS]
 ```
 
 Options:
-- `--type TEXT`: Filter by image type
-- `--version TEXT`: Filter by version
+- `--base64-str TEXT`: Base64 encoded firmware image
+- `--file PATH`: Path to .bin firmware file
+- `--name TEXT`: Image name [required]
+- `--version TEXT`: Firmware version
+- `--model TEXT`: Device model
+- `--type TEXT`: Device type
 
-Examples:
+##### List Images
 ```bash
-# List all images
-rmcli ota list-images
-
-# List specific version
-rmcli ota list-images --version 1.0.0
+rmcli ota image list
 ```
 
-#### Create OTA Job
+Description: List all OTA images
+
+##### Delete Image
 ```bash
-rmcli ota create-job [OPTIONS]
+rmcli ota image delete [OPTIONS]
 ```
 
 Options:
-- `--image-id TEXT`: ID of the OTA image [required]
-- `--node-ids TEXT`: Comma-separated list of node IDs [required]
-- `--schedule TEXT`: Schedule time for the update
+- `--image-id TEXT`: Image ID to delete
 
-Examples:
+##### Archive Image
 ```bash
-# Create immediate update job
-rmcli ota create-job --image-id img123 --node-ids node1,node2
-
-# Create scheduled update job
-rmcli ota create-job --image-id img123 --node-ids node1,node2 --schedule "2024-03-20 10:00:00"
+rmcli ota image archive [OPTIONS]
 ```
+
+Options:
+- `--image-id TEXT`: Image ID to archive/unarchive
+- `--unarchive`: Unarchive instead of archive
+
+#### Job Operations
+
+##### Create Job
+```bash
+rmcli ota job create [OPTIONS]
+```
+
+Options:
+- `--name TEXT`: OTA job name
+- `--image-id TEXT`: OTA image ID
+- `--description TEXT`: Job description (default: "Default OTA job description")
+- `--nodes TEXT`: Node IDs (comma-separated for multiple nodes)
+- `--priority INTEGER`: Job priority (1-10, default: 5)
+- `--timeout INTEGER`: Job timeout in seconds (default: 15 days)
+- `--force`: Force push OTA
+- `--approval`: Require user approval
+- `--notify`: Notify end users
+- `--continuous`: Keep job active after completion
+- `--serialized`: Network serialized delivery
+
+##### List Jobs
+```bash
+rmcli ota job list
+```
+
+Description: List OTA jobs
+
+##### Update Job
+```bash
+rmcli ota job update [OPTIONS]
+```
+
+Options:
+- `--job-id TEXT`: Job ID to update
+- `--archive`: Archive instead of cancel
+
+##### Job Status
+```bash
+rmcli ota job status [OPTIONS]
+```
+
+Options:
+- `--job-id TEXT`: Job ID to check status
 
 ### Server Management
 
-#### Set Server URL
+#### Update Server
 ```bash
-rmcli server set-url [OPTIONS]
+rmcli server update [OPTIONS]
 ```
 
 Options:
-- `--url TEXT`: Server URL [required]
-- `--verify-ssl BOOLEAN`: Whether to verify SSL certificates
+- `--endpoint TEXT`: New HTTP base URL endpoint
+- `--config TEXT`: Custom config file path
 
-Examples:
+#### Reset Server
 ```bash
-# Set production server
-rmcli server set-url --url https://api.rainmaker.com
-
-# Set development server without SSL verification
-rmcli server set-url --url https://dev-api.rainmaker.com --verify-ssl false
-```
-
-#### Get Server Info
-```bash
-rmcli server info
-```
-
-Displays current server configuration and status.
-
-### Creation Tools
-
-#### Create Project
-```bash
-rmcli create project [OPTIONS]
+rmcli server reset [OPTIONS]
 ```
 
 Options:
-- `--name TEXT`: Project name [required]
-- `--type TEXT`: Project type
-- `--template TEXT`: Template to use
+- `--config TEXT`: Custom config file path
 
-Examples:
+Description: Reset server configuration to default
+
+#### Show Server
 ```bash
-# Create basic project
-rmcli create project --name my-project
-
-# Create project from template
-rmcli create project --name my-project --template esp32-basic
+rmcli server show [OPTIONS]
 ```
+
+Options:
+- `--config TEXT`: Custom config file path
+
+Description: Show current server endpoint
+
+#### Cleanup
+```bash
+rmcli server cleanup [OPTIONS]
+```
+
+Options:
+- `--days INTEGER`: Maximum age of config files in days (default: 30)
+
+Description: Clean up old configuration files
 
 ## Use Cases
 
-### Device Provisioning Flow
+### Complete Device Management Flow
 ```bash
 # 1. Set up server connection
-rmcli server set-url --url https://api.rainmaker.com
+rmcli server set-url --url https://api.rainmaker.com --name "Production"
 
 # 2. Create user account
-rmcli user create --email user@example.com --password secretpass
+rmcli user create --email user@example.com --password secretpass --name "John Doe"
 
 # 3. Login
 rmcli login user --username user@example.com --password secretpass
 
 # 4. Create new project
-rmcli create project --name home-automation
+rmcli create project --name home-automation --type esp32 --template "smart-home"
 
-# 5. Add and configure node
-rmcli node add --type esp32 --name "Living Room Light"
+# 5. List available nodes
+rmcli node list --status online
 
-# 6. Update firmware
-rmcli ota create-job --image-id latest-firmware --node-ids node123
+# 6. Get node details
+rmcli node info --node-id node123 --include-params
+
+# 7. Control node
+rmcli node control --node-id node123 --param "light" --value "on"
+
+# 8. Create and monitor OTA update
+rmcli ota create-job --image-id latest-firmware --node-ids node123 --description "Feature update"
+rmcli ota monitor-job --job-id job123 --watch
 ```
 
-### User Management Flow
+### Automated Testing Flow
 ```bash
 # 1. Generate test email
-rmcli email generate
+rmcli email generate --prefix "test_user"
 
 # 2. Create user with generated email
-rmcli user create --email <generated-email>
+rmcli user create --email <generated-email> --password "test123"
 
 # 3. Verify email
-rmcli email verify
+rmcli email verify --timeout 600
 
 # 4. Login with verified account
-rmcli login user --username <generated-email> --password secretpass
+rmcli login user --username <generated-email> --password "test123"
+
+# 5. Create test project
+rmcli create project --name "test-project" --template "test-template"
 ```
 
 ## Error Handling
 
-If you encounter any errors:
-1. Use the `--debug` flag for detailed logging
-2. Ensure you're logged in for commands that require authentication
-3. Verify your server configuration is correct
-4. Check your internet connection
+Common error scenarios and solutions:
 
-Common Error Codes:
-- `401`: Authentication required
-- `403`: Insufficient permissions
-- `404`: Resource not found
-- `429`: Rate limit exceeded
+### Authentication Errors (401)
+- Ensure you're logged in: `rmcli login user`
+- Check if token has expired: Try logging out and back in
+- Verify correct credentials are being used
+
+### Permission Errors (403)
+- Ensure your user has required permissions
+- Check if you're using the correct configuration
+- Verify server URL is correct
+
+### Resource Not Found (404)
+- Verify resource IDs are correct
+- Check if resources still exist
+- Ensure you're connected to correct server
+
+### Rate Limiting (429)
+- Reduce request frequency
+- Use appropriate intervals for polling
+- Implement exponential backoff in scripts
+
+### Connection Errors
+- Check internet connectivity
+- Verify server URL is accessible
+- Check SSL certificate settings
 
 ## Support
 
-For additional help, use the `--help` flag with any command:
+### Getting Help
+Use the `--help` flag with any command for detailed information:
 ```bash
+# General help
 rmcli --help
+
+# Command-specific help
 rmcli <command> --help
+
+# Subcommand help
 rmcli <command> <subcommand> --help
 ```
 
-### Getting Help with Specific Commands
+### Debug Mode
+Enable debug mode for detailed logging:
 ```bash
-# Get help with login
-rmcli login --help
+rmcli --debug <command>
+```
 
-# Get help with OTA updates
-rmcli ota --help
+### Configuration Files
+- Config location: `~/.rainmaker/config.json`
+- Token location: `~/.rainmaker/token.json`
+- Log location: `~/.rainmaker/logs/`
 
-# Get help with node management
-rmcli node --help
-``` 
+### Common Tasks
+- Reset configuration: Delete `~/.rainmaker/config.json`
+- Clear tokens: Delete `~/.rainmaker/token.json`
+- View logs: Check `~/.rainmaker/logs/`
+
+For additional support:
+1. Check the online documentation
+2. Use the `--debug` flag for detailed logs
+3. Contact support with debug logs if needed 
