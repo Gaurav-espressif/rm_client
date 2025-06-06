@@ -4,9 +4,75 @@ import logging
 import os
 from pathlib import Path
 import json
-from .config_manager import ConfigManager
 
 logger = logging.getLogger(__name__)
+
+class ConfigManager:
+    def __init__(self, config_id: Optional[str] = None):
+        self.config_id = config_id
+        self.logger = logging.getLogger(__name__)
+        self._config_dir = self._get_config_dir()
+
+    def _get_config_dir(self) -> Path:
+        """Get the configuration directory path."""
+        home = Path.home()
+        config_dir = home / '.rainmaker'
+        config_dir.mkdir(exist_ok=True)
+        return config_dir
+
+    def _get_config_path(self) -> Path:
+        """Get the path to the configuration file."""
+        if self.config_id:
+            return self._config_dir / f"{self.config_id}.json"
+        return self._config_dir / "default.json"
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load configuration from file."""
+        config_path = self._get_config_path()
+        if not config_path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+        
+        try:
+            with open(config_path, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            self.logger.error(f"Invalid JSON in config file: {e}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Error loading config: {e}")
+            raise
+
+    def save_config(self, config_data: Dict[str, Any]) -> str:
+        """Save configuration to file."""
+        config_path = self._get_config_path()
+        try:
+            with open(config_path, 'w') as f:
+                json.dump(config_data, f, indent=2)
+            return self.config_id or "default"
+        except Exception as e:
+            self.logger.error(f"Error saving config: {e}")
+            raise
+
+    def update_token(self, token: str) -> None:
+        """Update the access token in the configuration."""
+        try:
+            config = self._load_config()
+        except FileNotFoundError:
+            config = {"session": {}, "environments": {"http_base_url": ""}}
+        
+        if "session" not in config:
+            config["session"] = {}
+        
+        config["session"]["access_token"] = token
+        self.save_config(config)
+
+    def get_token(self) -> Optional[str]:
+        """Get the access token from the configuration."""
+        try:
+            config = self._load_config()
+            return config.get("session", {}).get("access_token")
+        except FileNotFoundError:
+            return None
 
 class ApiClient:
     def __init__(self, config_id: Optional[str] = None):
