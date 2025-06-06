@@ -99,28 +99,27 @@ class LoginService:
                 "error_code": 500
             }
 
+    class LogoutService:
+        def __init__(self, api_client: ApiClient):
+            self.api_client = api_client
 
-class LogoutService:
-    def __init__(self, api_client: ApiClient):
-        self.api_client = api_client
+        def logout(self) -> Dict:
+            """Perform logout operations"""
+            try:
+                # Clear client-side tokens
+                self.api_client.clear_token()
 
-    def logout(self) -> Dict:
-        """Perform logout operations"""
-        try:
-            # Clear client-side tokens
-            self.api_client.clear_token()
+                # Optional: Make server-side logout request
+                response = self.api_client.post('/v1/logout', authenticate=True)
 
-            # Optional: Make server-side logout request
-            response = self.api_client.post('/v1/logout', authenticate=True)
-
-            return {
-                'status': 'success',
-                'message': 'Successfully logged out',
-                'server_response': response
-            }
-        except Exception as e:
-            return {
-                'status': 'failure',
-                'message': str(e),
-                'error_code': 500
-            }
+                return {
+                    'status': 'success',
+                    'message': 'Successfully logged out',
+                    'server_response': response
+                }
+            except Exception as e:
+                return {
+                    'status': 'failure',
+                    'message': str(e),
+                    'error_code': 500
+                }
