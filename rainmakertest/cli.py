@@ -20,7 +20,7 @@ from .utils.config import update_base_url, get_config_path, get_base_url
 from .utils.config_manager import ConfigManager
 
 # Import modularized CLI commands
-from .services.auth.cli import login, logout
+from .services.auth.auth_cli import login, logout
 from .services.user.cli import user
 from .services.admin.cli import admin
 from .services.ota.cli import ota
