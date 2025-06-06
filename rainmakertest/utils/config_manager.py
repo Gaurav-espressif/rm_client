@@ -4,6 +4,8 @@ import logging
 import os
 from pathlib import Path
 import json
+import uuid
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +54,33 @@ class ConfigManager:
         except Exception as e:
             self.logger.error(f"Error saving config: {e}")
             raise
+
+    def create_new_config(self, endpoint: str, username: Optional[str] = None, 
+                         password: Optional[str] = None) -> str:
+        """Create a new config file with UUID and return the UUID."""
+        if not endpoint:
+            raise ValueError("Endpoint URL cannot be empty")
+            
+        new_uuid = str(uuid.uuid4())
+        self.config_id = new_uuid
+        
+        config_data = {
+            'environments': {
+                'http_base_url': endpoint.rstrip('/')
+            },
+            'session': {
+                'created_at': datetime.utcnow().isoformat(),
+                'last_used': datetime.utcnow().isoformat()
+            }
+        }
+        
+        if username:
+            config_data['session']['username'] = username
+        if password:
+            config_data['session']['password'] = password
+            
+        self.save_config(config_data)
+        return new_uuid
 
     def update_token(self, token: str) -> None:
         """Update the access token in the configuration."""
