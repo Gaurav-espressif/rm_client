@@ -2,6 +2,10 @@ import logging
 import os
 import sys
 
+def get_logger(name):
+    """Get a logger instance with the specified name"""
+    return logging.getLogger(name)
+
 def setup_logging():
     """Configure logging for the application"""
     # Create logs directory if it doesn't exist
@@ -20,8 +24,4 @@ def setup_logging():
     
     # Set specific logger levels
     logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-
-def get_logger(name: str) -> logging.Logger:
-    """Get a logger instance for the given name."""
-    return logging.getLogger(name) 
+    logging.getLogger("requests").setLevel(logging.WARNING) 

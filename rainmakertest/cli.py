@@ -3,7 +3,7 @@ import click
 from typing import Optional, List
 import logging
 
-from rainmakertest.utils.email_service import EmailService
+from .utils.email_service import EmailService
 from .utils.api_client import ApiClient
 from .auth.login_service import LoginService
 from .user.user_service import UserService
@@ -21,13 +21,13 @@ from .utils.config_manager import ConfigManager
 
 # Import modularized CLI commands
 from .services.auth.auth_cli import login, logout
-from .services.user.cli import user
-from .services.admin.cli import admin
-from .services.ota.cli import ota
-from .services.node.cli import node
-from .services.email.cli import email
-from .services.server.cli import server
-from .services.create.cli import create
+from .services.user.user_cli import user
+from .services.admin.admin_cli import admin
+from .services.ota.ota_cli import ota
+from .services.node.node_cli import node
+from .services.email.email_cli import email
+from .services.server.server_cli import server
+from .services.create.create_cli import create
 
 @click.group()
 @click.option('--debug', is_flag=True, help="Enable debug logging")
@@ -57,7 +57,7 @@ def cli(ctx, debug, config):
     else:
         # For commands other than login, try to use default config
         try:
-            # Create API client without config_id to use default config.json/token.json
+            # Create API client without config_id to use default.json
             api_client = ApiClient()
             
             # Skip token verification for commands that do not require login
@@ -101,6 +101,7 @@ cli.add_command(ota)
 cli.add_command(node)
 cli.add_command(email)
 cli.add_command(server)
+cli.add_command(admin)
 
 if __name__ == '__main__':
     cli()

@@ -7,7 +7,7 @@ from ...utils.api_client import ApiClient
 from ...auth.login_service import LoginService
 from ...utils.config_manager import ConfigManager
 from ...utils.logging_config import get_logger
-from ...utils.paths import get_temp_dir, ensure_directory_exists
+from ...utils.paths import get_user_config_dir, ensure_directory_exists
 
 logger = get_logger(__name__)
 
@@ -49,14 +49,11 @@ def login(username, password):
         raise click.ClickException(f"Login failed: {str(e)}")
 
 @auth.command()
-@click.pass_context
-def logout(ctx):
+def logout():
     """Logout from Rainmaker session."""
     try:
-        config_id = ctx.obj.get('config_id') if ctx.obj else None
-        api_client = ApiClient(config_id=config_id)
-        
-        # Call the logout2 endpoint
+        api_client = ApiClient()
+        # Call the new logout2 endpoint
         response = api_client.post('v1/logout2')
         
         if response.get('status') == 'error':
@@ -87,89 +84,107 @@ def user(ctx, username, password, endpoint):
     if not password:
         password = click.prompt("Password", hide_input=True)
 
-    try:
-        if endpoint:
-            # Generate UUID for the new config
-            config_id = str(uuid.uuid4())
-            logger.debug(f"Generated config ID: {config_id}")
+    # Create config manager
+    config_manager = ConfigManager()
 
-            # Get temp directory path and ensure it exists
-            temp_dir = get_temp_dir()  # Already includes /temp/rainmaker
-            ensure_directory_exists(temp_dir)
-
-            # Create config file path
-            config_path = temp_dir / f"{config_id}.json"
-            logger.debug(f"Creating new config at: {config_path}")
-
-            # Initialize config data with the provided endpoint
-            config_data = {
-                'environments': {
-                    'http_base_url': endpoint.rstrip('/')
-                },
-                'session': {}
-            }
-
-            # Save initial config
-            with open(config_path, 'w') as f:
-                json.dump(config_data, f, indent=4)
-
-            # Create API client with the new config
-            api_client = ApiClient(config_id=config_id)
-        else:
-            # Use default config
-            api_client = ApiClient()
-
-        # Call the login2 endpoint with correct path
-        response = api_client.post(
-            '/v1/login2',
-            data={
-                'user_name': username,
-                'password': password
-            },
-            authenticate=False
-        )
+    # Check if we're using a specific config (--config flag was used)
+    if hasattr(ctx, 'obj') and 'config_id' in ctx.obj:
+        # Using specific config, create API client with that config
+        api_client = ApiClient(config_id=ctx.obj['config_id'])
+        login_service = LoginService(api_client)
         
-        if isinstance(response, dict) and response.get('status') == 'failure':
-            logger.error(f"Login failed: {response.get('description')}")
-            raise click.ClickException(f"Login failed: {response.get('description')}")
-            
-        access_token = response.get('accesstoken')
-        if not access_token:
-            logger.error("No access token in response")
-            raise click.ClickException("Login failed: No access token received")
-            
-        # Store the token
-        api_client.set_token(access_token)
+        # Update context with new instances
+        ctx.obj['api_client'] = api_client
+        ctx.obj['login_service'] = login_service
 
-        if endpoint:
-            click.echo(f"Login successful. Access token: {access_token[:10]}...")
-            click.echo(f"Configuration ID: {config_id}")
-            click.echo("Use this ID with --config option for subsequent commands")
+        # Attempt login
+        result = login_service.login_user(username, password)
+
+        if result.get("status") == "success":
+            click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
         else:
-            click.echo(f"Login successful. Access token: {access_token[:10]}...")
+            click.echo(f"Login failed: {result.get('message', 'Unknown error')}")
+        return
+
+    # Handle default case (no endpoint provided)
+    if not endpoint:
+        try:
+            # Try to get the default endpoint from default.json
+            endpoint = config_manager.get_base_url()
+        except FileNotFoundError:
+            click.echo("No default configuration found. Please specify --endpoint or run 'rmcli server reset'")
+            return
+
+        # Create API client with default config
+        api_client = ApiClient()
+        login_service = LoginService(api_client)
         
-    except Exception as e:
-        logger.error(f"Login failed: {str(e)}")
-        raise click.ClickException(f"Login failed: {str(e)}")
+        # Update context with new instances
+        ctx.obj['api_client'] = api_client
+        ctx.obj['login_service'] = login_service
+
+        # Attempt login
+        result = login_service.login_user(username, password)
+
+        if result.get("status") == "success":
+            click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+        else:
+            click.echo(f"Login failed: {result.get('message', 'Unknown error')}")
+        return
+
+    # Handle custom endpoint case
+    config_id = config_manager.create_new_config(
+        endpoint=endpoint,
+        username=username,
+        password=password
+    )
+
+    # Create new API client with the new config
+    api_client = ApiClient(config_id=config_id)
+    
+    # Create new login service with the new API client
+    login_service = LoginService(api_client)
+    
+    # Update context with new instances
+    ctx.obj['api_client'] = api_client
+    ctx.obj['login_service'] = login_service
+    ctx.obj['config_id'] = config_id
+
+    # Attempt login with the new service
+    result = login_service.login_user(username, password)
+
+    if result.get("status") == "success":
+        click.echo(f"Login successful. Access token: {result['token']['access_token'][:15]}...")
+        click.echo(f"Configuration ID: {config_id}")
+        click.echo("Use this ID with --config option for subsequent commands")
+    else:
+        click.echo(f"Login failed: {result.get('message', 'Unknown error')}")
 
 @click.command()
 @click.pass_context
 def logout(ctx):
-    """Logout from Rainmaker session."""
+    """Logout current user by clearing tokens"""
     try:
-        config_id = ctx.obj.get('config_id') if ctx.obj else None
-        api_client = ApiClient(config_id=config_id)
+        # Get the API client from context
+        api_client = ctx.obj['api_client']
         
-        # Call the logout2 endpoint
-        response = api_client.post('v1/logout2')
-        
-        if response.get('status') == 'error':
-            logger.error(f"Logout failed: {response.get('description')}")
-            raise click.ClickException(f"Logout failed: {response.get('description')}")
-            
-        # Clear the token after successful logout
+        # Get current token before clearing
+        token = api_client.config_manager.get_token()
+        if not token:
+            click.echo("No active token found")
+            return
+
+        # Get config ID before clearing
+        config_id = api_client.config_id
+
+        # Clear client-side tokens
         api_client.clear_token()
-        click.echo("Logged out successfully")
+
+        # If using a specific config (UUID), delete the config file
+        if config_id:
+            api_client.config_manager.delete_config(config_id)
+
+        click.echo("Successfully logged out")
     except Exception as e:
-        logger.error(f"Logout failed: {str(e)}")
-        raise click.ClickException(f"Logout failed: {str(e)}") 
+        click.echo(f"Logout failed: {str(e)}")
+        raise click.Abort() 

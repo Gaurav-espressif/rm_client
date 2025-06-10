@@ -71,7 +71,13 @@ class LoginService:
 
             # Verify the token contains required claims
             try:
-                decoded = jwt.decode(token_data["access_token"], options={"verify_signature": False})
+                try:
+                    # Try PyJWT >= 2.0.0 method
+                    decoded = jwt.decode(token_data["access_token"], options={"verify_signature": False})
+                except AttributeError:
+                    # Fallback for older PyJWT versions
+                    decoded = jwt.decode(token_data["access_token"], verify=False)
+                
                 if not decoded.get("sub"):
                     return {
                         "status": "failure",
@@ -99,27 +105,28 @@ class LoginService:
                 "error_code": 500
             }
 
-    class LogoutService:
-        def __init__(self, api_client: ApiClient):
-            self.api_client = api_client
 
-        def logout(self) -> Dict:
-            """Perform logout operations"""
-            try:
-                # Clear client-side tokens
-                self.api_client.clear_token()
+class LogoutService:
+    def __init__(self, api_client: ApiClient):
+        self.api_client = api_client
 
-                # Optional: Make server-side logout request
-                response = self.api_client.post('/v1/logout', authenticate=True)
+    def logout(self) -> Dict:
+        """Perform logout operations"""
+        try:
+            # Clear client-side tokens
+            self.api_client.clear_token()
 
-                return {
-                    'status': 'success',
-                    'message': 'Successfully logged out',
-                    'server_response': response
-                }
-            except Exception as e:
-                return {
-                    'status': 'failure',
-                    'message': str(e),
-                    'error_code': 500
-                }
+            # Optional: Make server-side logout request
+            response = self.api_client.post('/v1/logout', authenticate=True)
+
+            return {
+                'status': 'success',
+                'message': 'Successfully logged out',
+                'server_response': response
+            }
+        except Exception as e:
+            return {
+                'status': 'failure',
+                'message': str(e),
+                'error_code': 500
+            }
