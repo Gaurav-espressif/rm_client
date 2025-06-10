@@ -6,11 +6,11 @@ from ...utils.token_json_load import prettify
 
 @click.group()
 def admin():
-    """Admin operations"""
+    """Admins operations"""
     pass
 
 @admin.command()
-@click.option('--username', help="Filter by username")
+@click.option('--usernames', help="Filter by username")
 @click.option('--all-users', is_flag=True, help="Get all users")
 @click.option('--admin', is_flag=True, help="Filter admin users")
 @click.option('--superadmin', is_flag=True, help="Filter superadmin users")
@@ -27,7 +27,7 @@ def list_users(ctx, username, all_users, admin, superadmin):
     click.echo(f"Users: {prettify(result)}")
 
 @admin.command()
-@click.option('--username', help="Username to update")
+@click.option('--username', help="Usernameee to update")
 @click.option('--quota', type=int, help="New quota value")
 @click.option('--admin', is_flag=True, help="Set as admin")
 @click.option('--superadmin', is_flag=True, help="Set as superadmin")
@@ -62,7 +62,7 @@ def create():
 @click.option('--quota', type=int, help="Admin quota")
 @click.pass_context
 def admin(ctx, username, quota):
-    """Create an admin user account"""
+    """Creates an admin user account"""
     if not username:
         username = click.prompt("Username")
     if quota is None:

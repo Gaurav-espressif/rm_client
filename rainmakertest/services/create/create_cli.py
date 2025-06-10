@@ -7,18 +7,18 @@ def create():
     pass
 
 @create.command()
-@click.option('--user_name', help="Email address or mobile number with country code (e.g. username@domain.com or +1234567890)")
+@click.option('--username', help="Email address or mobile number with country code (e.g. username@domain.com or +1234567890)")
 @click.option('--password', help="Password")
 @click.option('--locale', default="no_locale", help="Locale preference")
 @click.pass_context
-def user(ctx, user_name, password, locale):
+def user(ctx, username, password, locale):
     """Create a regular user account (email or phone with country code)"""
-    if not user_name:
-        user_name = click.prompt("Email address or mobile number with country code")
+    if not username:
+        username = click.prompt("Email address or mobile number with country code")
     if not password:
         password = click.prompt("Password", hide_input=True)
 
-    result = ctx.obj['user_service'].create_user(user_name, password)
+    result = ctx.obj['user_service'].create_user(username, password)
     click.echo(f"User created: {result}")
 
 @create.command()

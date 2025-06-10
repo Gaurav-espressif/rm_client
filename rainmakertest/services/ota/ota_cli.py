@@ -19,7 +19,7 @@ def image():
     pass
 
 @image.command()
-@click.option('--base64-str', 'base64_str', help="Base64 encoded firmware image (optional if default .bin exists)")
+@click.option('--base64-str', help="Base64 encoded firmware image (optional if default .bin exists)")
 @click.option('--file', type=click.Path(exists=True), help="Path to .bin firmware file (optional)")
 @click.option('--name', required=True, help="Image name")
 @click.option('--version', help="Firmware version")

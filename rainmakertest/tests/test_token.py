@@ -1,5 +1,5 @@
-from utils.logging_config import setup_logging
-from utils.token_store import TokenStore
+from ..utils.logging_config import setup_logging
+from ..utils.token_store import TokenStore
 import logging
 
 def test_token_storage():
