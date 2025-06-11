@@ -1,5 +1,5 @@
 import click
-from ...utils.token_json_load import prettify
+import json
 
 @click.group()
 def create():
@@ -19,7 +19,7 @@ def user(ctx, username, password, locale):
         password = click.prompt("Password", hide_input=True)
 
     result = ctx.obj['user_service'].create_user(username, password)
-    click.echo(f"User created: {result}")
+    click.echo(json.dumps(result, indent=2))
 
 @create.command()
 @click.option('--username', help="Admin username (email)")
@@ -36,7 +36,7 @@ def admin(ctx, username, quota):
         user_name=username,
         quota=quota
     )
-    click.echo(f"Admin user created: {prettify(result)}")
+    click.echo(json.dumps(result, indent=2))
 
 @create.command()
 @click.option('--username', help="Superadmin username (email)")
@@ -49,4 +49,4 @@ def superadmin(ctx, username):
     result = ctx.obj['admin_service'].create_superadmin(
         user_name=username
     )
-    click.echo(f"Superadmin user created: {prettify(result)}") 
+    click.echo(json.dumps(result, indent=2)) 

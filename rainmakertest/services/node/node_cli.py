@@ -13,7 +13,11 @@ logger = logging.getLogger(__name__)
 def handle_validation_error(error: ValueError) -> None:
     """Handle validation errors consistently"""
     logger.error(f"Validation error: {str(error)}")
-    click.echo(f"Error: {str(error)}", err=True)
+    click.echo(json.dumps({
+        "status": "failure",
+        "description": str(error),
+        "error_code": 400
+    }, indent=2))
     raise click.Abort()
 
 def parse_json_input(json_str: Optional[str]) -> Optional[dict]:
@@ -24,7 +28,11 @@ def parse_json_input(json_str: Optional[str]) -> Optional[dict]:
         return json.loads(json_str)
     except JSONDecodeError as e:
         logger.error(f"Invalid JSON input: {str(e)}")
-        click.echo(f"Error: Invalid JSON input - {str(e)}", err=True)
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": f"Invalid JSON input - {str(e)}",
+            "error_code": 400
+        }, indent=2))
         raise click.Abort()
 
 @click.group()
@@ -116,7 +124,11 @@ def share(ctx, nodes: str, user_name: str, primary: bool, metadata: Optional[str
         handle_validation_error(e)
     except Exception as e:
         logger.error(f"Error sharing nodes: {str(e)}")
-        click.echo(f"Error: {str(e)}", err=True)
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
         raise click.Abort()
 
 @sharing.command()
@@ -410,39 +422,32 @@ def list_user_nodes(user_name: Optional[str], version: str):
 @click.pass_context
 def list(ctx):
     """List all nodes"""
-    node_service = ctx.obj['node_service']
     try:
+        node_service = ctx.obj['node_service']
         result = node_service.get_user_nodes()
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
 
 @node.command()
 @click.option('--node-id', help="Node ID to check status")
 @click.pass_context
 def status(ctx, node_id):
     """Check node status"""
-    node_service = ctx.obj['node_service']
     try:
+        node_service = ctx.obj['node_service']
         result = node_service.get_node_status(node_id)
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
 
 @node.command()
 @click.option('--node-id', help="Node ID to get configuration")

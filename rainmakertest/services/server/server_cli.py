@@ -23,9 +23,17 @@ def update(ctx, endpoint):
     try:
         config_manager = ConfigManager()
         config_manager.update_base_url(endpoint)
-        print("Default server endpoint updated")
+        click.echo(json.dumps({
+            "status": "success",
+            "description": "Server endpoint updated",
+            "endpoint": endpoint
+        }, indent=2))
     except Exception as e:
-        print(f"Error updating server endpoint: {e}")
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
 
 @server.command()
 @click.pass_context
@@ -34,9 +42,16 @@ def reset(ctx):
     try:
         config_manager = ConfigManager()
         config_manager.reset_to_default()
-        print("Default server configuration reset to default")
+        click.echo(json.dumps({
+            "status": "success",
+            "description": "Server configuration reset to default"
+        }, indent=2))
     except Exception as e:
-        print(f"Error resetting server configuration: {e}")
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
 
 @server.command()
 @click.pass_context
@@ -45,19 +60,16 @@ def show(ctx):
     try:
         config_manager = ConfigManager()
         endpoint = config_manager.get_base_url()
-        print("\nStatus Code: 200")
-        print("Response Body:")
-        print(json.dumps({
+        click.echo(json.dumps({
             "status": "success",
             "description": "Current server endpoint",
             "endpoint": endpoint
         }, indent=2))
     except Exception as e:
-        print("\nStatus Code: 400")
-        print("Response Body:")
-        print(json.dumps({
-            "status": "error",
-            "description": str(e)
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
         }, indent=2))
 
 @server.command()
@@ -68,16 +80,13 @@ def cleanup(ctx, days):
     try:
         config_manager = ConfigManager()
         config_manager.cleanup_old_configs(days)
-        print("\nStatus Code: 200")
-        print("Response Body:")
-        print(json.dumps({
+        click.echo(json.dumps({
             "status": "success",
             "description": "Cleanup completed successfully"
         }, indent=2))
     except Exception as e:
-        print("\nStatus Code: 400")
-        print("Response Body:")
-        print(json.dumps({
-            "status": "error",
-            "description": str(e)
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
         }, indent=2)) 

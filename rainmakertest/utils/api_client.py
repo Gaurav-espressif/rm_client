@@ -49,22 +49,6 @@ class ApiClient:
                 raise
         return self._config_data
 
-    def _load_config(self) -> Dict[str, Any]:
-        """Load configuration data."""
-        if not self._config_data:
-            try:
-                self._config_data = self.config_manager._load_config()
-            except FileNotFoundError as e:
-                self.logger.error(f"Configuration file not found: {e}")
-                raise
-            except json.JSONDecodeError as e:
-                self.logger.error(f"Invalid JSON in config file: {e}")
-                raise ValueError(f"Invalid configuration file format: {e}")
-            except Exception as e:
-                self.logger.error(f"Error loading config: {e}")
-                raise
-        return self._config_data
-
     def _get_headers(self, authenticate: bool = True) -> Dict[str, str]:
         """Get headers for API requests."""
         headers = {
@@ -97,16 +81,20 @@ class ApiClient:
                 error_msg = "Server error - please try again later"
             
             self.logger.error(error_msg)
-            return {
-                "status": "failure",
-                "message": error_msg,
-                "error_code": response.status_code
-            }
+            try:
+                return response.json()  # Return raw error response from server
+            except:
+                # Only if server doesn't return JSON, create a basic error
+                return {
+                    "status": "failure",
+                    "description": str(e),
+                    "error_code": response.status_code
+                }
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Request failed: {str(e)}")
             return {
                 "status": "failure",
-                "message": str(e),
+                "description": str(e),
                 "error_code": 500
             }
 

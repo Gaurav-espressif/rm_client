@@ -24,6 +24,10 @@ class LoginService:
             response = self.api_client.post(endpoint, json=payload, authenticate=False)
             self.logger.debug(f"Login response: {response}")
 
+            # If response indicates failure, return it directly
+            if isinstance(response, dict) and response.get("status") == "failure":
+                return response
+
             # Check if response is a string (JSON string)
             if isinstance(response, str):
                 try:
@@ -31,7 +35,7 @@ class LoginService:
                 except json.JSONDecodeError:
                     return {
                         "status": "failure",
-                        "message": "Invalid JSON response from server",
+                        "description": "Invalid JSON response from server",
                         "error_code": 500
                     }
 
@@ -51,17 +55,13 @@ class LoginService:
                     "refresh_token": response_data.get("refreshtoken", "")
                 }
             else:
-                return {
-                    "status": "failure",
-                    "message": f"Unexpected response format: {response}",
-                    "error_code": 500
-                }
+                return response  # Return raw server response if format is unexpected
 
             # Verify we have the required tokens
             if not token_data["access_token"]:
                 return {
                     "status": "failure",
-                    "message": "No access token in response",
+                    "description": "No access token in response",
                     "error_code": 401
                 }
 
@@ -81,13 +81,13 @@ class LoginService:
                 if not decoded.get("sub"):
                     return {
                         "status": "failure",
-                        "message": "Token missing required user claims",
+                        "description": "Token missing required user claims",
                         "error_code": 401
                     }
             except Exception as e:
                 return {
                     "status": "failure",
-                    "message": f"Token validation failed: {str(e)}",
+                    "description": f"Token validation failed: {str(e)}",
                     "error_code": 401
                 }
 
@@ -98,10 +98,22 @@ class LoginService:
             }
 
         except Exception as e:
+            # Try to extract server response from error
+            error_str = str(e)
+            if "{'status':" in error_str:
+                # Extract the JSON string from the error message
+                start = error_str.find("{")
+                end = error_str.rfind("}") + 1
+                try:
+                    error_json = json.loads(error_str[start:end])
+                    return error_json
+                except:
+                    pass
+            
             self.logger.error(f"Login error: {str(e)}")
             return {
                 "status": "failure",
-                "message": str(e),
+                "description": str(e),
                 "error_code": 500
             }
 

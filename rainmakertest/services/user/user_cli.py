@@ -3,6 +3,7 @@ from typing import Optional
 from ...utils.api_client import ApiClient
 from ...user.user_service import UserService
 from ...utils.token_json_load import prettify
+import json
 
 @click.group()
 def create():
@@ -22,7 +23,7 @@ def user(ctx, username, password, locale):
         password = click.prompt("Password", hide_input=True)
 
     result = ctx.obj['user_service'].create_user(username, password)
-    click.echo(f"User created: {result}")
+    click.echo(json.dumps(result, indent=2))
 
 @click.group()
 def user():
@@ -46,7 +47,7 @@ def confirm(ctx, username, verification_code, locale):
         verification_code=verification_code,
         locale=locale
     )
-    click.echo(f"User confirmed: {prettify(result)}")
+    click.echo(json.dumps(result, indent=2))
 
 @user.command()
 @click.option('--name', help="Update user's name (e.g., --name 'John Doe')")
@@ -136,7 +137,7 @@ def info(ctx):
     """Get current user's information"""
     user_service = ctx.obj['user_service']
     result = user_service.get_user_info()
-    click.echo(result)
+    click.echo(json.dumps(result, indent=2))
 
 @user.command()
 @click.option('--verify-code', help="Verification code received via email")

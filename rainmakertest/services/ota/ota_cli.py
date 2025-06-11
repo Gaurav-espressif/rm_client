@@ -272,19 +272,13 @@ def update(ctx, job_id, archive):
     ota_job_service = ctx.obj['ota_job_service']
     try:
         result = ota_job_service.update_job(job_id, archive)
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps({
+            "status": "failure",
+            "description": str(e),
+            "error_code": 500
+        }, indent=2))
 
 @job.command()
 @click.option('--job-id', help="Job ID to check status")
