@@ -15,7 +15,7 @@ class OTAJobService:
             nodes: Optional[List[str]] = None,
             priority: int = 5,
             timeout: int = 1296000,
-            force_push: bool = False,
+            force_push: bool = True,
             user_approval: bool = False,
             notify: bool = False,
             continuous: bool = False,
@@ -24,7 +24,7 @@ class OTAJobService:
         """Create a new OTA job"""
         endpoint = "/v1/admin/otajob"
         params = {
-            "force_push": "true" if force_push else "false",
+            "force_push": "true",
             "user_approval": "true" if user_approval else "false",
             "notify": "true" if notify else "false",
             "continuous": "true" if continuous else "false",
