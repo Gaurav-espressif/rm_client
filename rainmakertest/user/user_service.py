@@ -55,3 +55,52 @@ class UserService:
             params["request"] = "true"
 
         return self.api_client.delete(endpoint, params=params)
+    def change_password(self, current_password: str, new_password: str) -> Dict:
+        """Change user password"""
+        endpoint = "/v1/password2"
+        payload = {
+            "password": current_password,
+            "newpassword": new_password
+        }
+        return self.api_client.put(endpoint, json=payload)
+
+    def forgot_password(self, user_name: str, password: Optional[str] = None, 
+                       verification_code: Optional[str] = None, locale: str = "empty") -> Dict:
+        """Handle forgot password request"""
+        endpoint = "/v1/forgotpassword2"
+        params = {"locale": locale} if locale != "empty" else None
+        
+        if password and verification_code:
+            # Confirm forgot password with new password and verification code
+            payload = {
+                "user_name": user_name,
+                "password": password,
+                "verification_code": verification_code
+            }
+        else:
+            # Request forgot password - send verification code
+            payload = {
+                "user_name": user_name
+            }
+        
+        return self.api_client.put(endpoint, json=payload, params=params, authenticate=False)
+
+    def update_user_details(self, name: Optional[str] = None, phone_number: Optional[str] = None,
+                           verification_code: Optional[str] = None, mfa: Optional[bool] = None,
+                           locale: Optional[str] = None) -> Dict:
+        """Update user details including name, phone number, MFA status, and locale"""
+        endpoint = "/v1/user2"
+        payload = {}
+        
+        if name is not None:
+            payload["name"] = name
+        if phone_number is not None:
+            payload["phone_number"] = phone_number
+        if verification_code is not None:
+            payload["verification_code"] = verification_code
+        if mfa is not None:
+            payload["mfa"] = mfa
+        if locale is not None:
+            payload["locale"] = locale
+            
+        return self.api_client.put(endpoint, json=payload)
