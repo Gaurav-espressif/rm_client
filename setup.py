@@ -29,7 +29,7 @@ setup(
     python_requires=">=3.8",
     entry_points={
         'console_scripts': [
-            'rmcli=rainmakertest.cli:cli',
+            'rmcli=rainmakertest.services.main.main_cli:cli',
         ],
     },
 )

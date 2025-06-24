@@ -16,6 +16,7 @@ from ...ota.ota_job_service import OTAJobService
 from ...utils.token_json_load import prettify
 from ...nodes.node_service import NodeService
 from ...nodes.node_admin_service import NodeAdminService
+from ...device_grouping.grouping import GroupingService
 from ...utils.config_manager import ConfigManager
 from ...utils.logging_config import setup_logging, get_logger
 from ...utils.paths import get_user_config_path, get_temp_dir, get_project_root, get_user_config_dir, ensure_directory_exists
@@ -46,6 +47,7 @@ from ..node.node_cli import node
 from ..email.email_cli import email
 from ..server.server_cli import server
 from ..create.create_cli import create
+from ..device_grouping.grouping_cli import grouping
 
 @click.group()
 @click.option('--debug', is_flag=True, help="Enable debug logging")
@@ -55,7 +57,11 @@ def cli(ctx, debug, config):
     """Rainmaker CLI tool"""
     # Set up logging
     log_level = logging.DEBUG if debug else logging.INFO
-    setup_logging(log_level)
+    setup_logging()
+    
+    # Set logging level after setup
+    if debug:
+        logging.getLogger('rainmakertest').setLevel(logging.DEBUG)
     
     # Initialize context object
     ctx.ensure_object(dict)
@@ -73,6 +79,7 @@ def cli(ctx, debug, config):
     ctx.obj['ota_job_service'] = OTAJobService(api_client)
     ctx.obj['node_service'] = NodeService(api_client)
     ctx.obj['node_admin_service'] = NodeAdminService(api_client)
+    ctx.obj['grouping_service'] = GroupingService(api_client)
     
     # Store config_id in context if provided
     if config:
@@ -108,7 +115,7 @@ def cli(ctx, debug, config):
             logger.debug(f"Created default config at: {default_config_path}")
             
     # For commands that require authentication, verify token
-    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user']:
+    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping']:
         token = api_client.config_manager.get_token()
         if not token:
             logger.warning("No token found, login required")
@@ -126,6 +133,7 @@ cli.add_command(node)
 cli.add_command(email)
 cli.add_command(server)
 cli.add_command(create)
+cli.add_command(grouping)
 
 @server.command()
 def reset():
