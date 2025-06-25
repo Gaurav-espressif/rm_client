@@ -46,12 +46,7 @@ def upload(ctx, base64_str, file, name, version, model, type):
                     base64_fwimage = base64.b64encode(f.read()).decode('utf-8')
                 bin_file_path = None
             except FileNotFoundError:
-                output = {
-                    "status": "error",
-                    "response": None,
-                    "error": "No firmware file provided and default switch.bin not found"
-                }
-                click.echo(json.dumps(output, indent=2))
+                click.echo(json.dumps("No firmware file provided and default switch.bin not found", indent=2))
                 return
 
         result = ota_service.upload_image(
@@ -62,19 +57,9 @@ def upload(ctx, base64_str, file, name, version, model, type):
             base64_fwimage=base64_fwimage,
             bin_file_path=bin_file_path
         )
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @image.command()
 @click.pass_context
@@ -98,27 +83,14 @@ def list(ctx):
                 for img in result['ota_images']
             ]
             output = {
-                "status": "success",
-                "response": {
-                    "headers": headers,
-                    "data": table_data
-                },
-                "error": None
+                "headers": headers,
+                "data": table_data
             }
         else:
-            output = {
-                "status": "success",
-                "response": [],
-                "error": None
-            }
+            output = []
         click.echo(json.dumps(output, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @image.command()
 @click.option('--image-id', help="Image ID to delete")
@@ -128,19 +100,9 @@ def delete(ctx, image_id):
     ota_service = ctx.obj['ota_image_service']
     try:
         result = ota_service.delete_image(image_id)
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @image.command()
 @click.option('--image-id', help="Image ID to archive/unarchive")
@@ -151,19 +113,9 @@ def archive(ctx, image_id, unarchive):
     ota_service = ctx.obj['ota_image_service']
     try:
         result = ota_service.archive_image(image_id, unarchive)
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @ota.group()
 def job():
@@ -187,7 +139,7 @@ def create(ctx, name, image_id, description, nodes, priority, timeout,
            force, approval, notify, continuous, serialized):
     """Create a new OTA job"""
     ota_job_service = ctx.obj['ota_job_service']
-    
+
     try:
         # Convert comma-separated nodes string to list
         node_list = nodes.split(',') if nodes else []
@@ -205,19 +157,9 @@ def create(ctx, name, image_id, description, nodes, priority, timeout,
             continuous=continuous,
             network_serialised=serialized
         )
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @job.command()
 @click.pass_context
@@ -241,27 +183,14 @@ def list(ctx):
                 for job in result['otaJobs']
             ]
             output = {
-                "status": "success",
-                "response": {
-                    "headers": headers,
-                    "data": table_data
-                },
-                "error": None
+                "headers": headers,
+                "data": table_data
             }
         else:
-            output = {
-                "status": "success",
-                "response": [],
-                "error": None
-            }
+            output = []
         click.echo(json.dumps(output, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @job.command()
 @click.option('--job-id', help="Job ID to update")
@@ -274,11 +203,7 @@ def update(ctx, job_id, archive):
         result = ota_job_service.update_job(job_id, archive)
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        click.echo(json.dumps({
-            "status": "failure",
-            "description": str(e),
-            "error_code": 500
-        }, indent=2))
+        click.echo(json.dumps(str(e), indent=2))
 
 @job.command()
 @click.option('--job-id', help="Job ID to check status")
@@ -288,16 +213,6 @@ def status(ctx, job_id):
     ota_job_service = ctx.obj['ota_job_service']
     try:
         result = ota_job_service.get_job_status(job_id)
-        output = {
-            "status": "success",
-            "response": result,
-            "error": None
-        }
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
-        output = {
-            "status": "error",
-            "response": None,
-            "error": str(e)
-        }
-        click.echo(json.dumps(output, indent=2)) 
+        click.echo(json.dumps(str(e), indent=2)) 

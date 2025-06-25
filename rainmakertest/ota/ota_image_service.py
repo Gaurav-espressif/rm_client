@@ -42,11 +42,7 @@ class OTAService:
                 print(f"\nNo firmware provided. Using default file: {self.default_bin_path}")
                 base64_fwimage = self._file_to_base64(self.default_bin_path)
             else:
-                return {
-                    "status": "failure",
-                    "description": "No firmware provided (use --base64, --file, or ensure switch.bin exists)",
-                    "error_code": 400000 # Custom client-side error code
-                }
+                raise ValueError("No firmware provided (use --base64, --file, or ensure switch.bin exists)")
 
 
         # Prepare payload
