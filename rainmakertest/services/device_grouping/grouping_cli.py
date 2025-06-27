@@ -392,10 +392,12 @@ def sharing():
 @click.option('--groups', required=True, help='Comma-separated list of group IDs')
 @click.option('--user-name', required=True, help='Username to share with')
 @click.option('--primary', is_flag=True, help='Set as primary user')
+@click.option('--transfer', is_flag=True, help='Transfer ownership to user')
+@click.option('--new-role', help='New role for current user after transfer (secondary)')
 @click.option('--metadata', help='JSON string of metadata')
 @click.pass_context
-def share(ctx, groups: str, user_name: str, primary: bool, metadata: Optional[str]):
-    """Share groups with another user"""
+def share(ctx, groups: str, user_name: str, primary: bool, transfer: bool, new_role: Optional[str], metadata: Optional[str]):
+    """Share groups with another user or transfer ownership"""
     try:
         api_client = ctx.obj['api_client']
         grouping_service = GroupingService(api_client)
@@ -407,6 +409,8 @@ def share(ctx, groups: str, user_name: str, primary: bool, metadata: Optional[st
             groups=groups_list,
             user_name=user_name,
             primary=primary,
+            transfer=transfer,
+            new_role=new_role,
             metadata=metadata_dict
         )
         click.echo(json.dumps(result, indent=2))

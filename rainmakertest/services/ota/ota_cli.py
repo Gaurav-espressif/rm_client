@@ -112,7 +112,9 @@ def archive(ctx, image_id, unarchive):
     """Archive or unarchive an OTA image"""
     ota_service = ctx.obj['ota_image_service']
     try:
-        result = ota_service.archive_image(image_id, unarchive)
+        # If --unarchive flag is True, we want to unarchive (archive=False)
+        # If --unarchive flag is False (default), we want to archive (archive=True)
+        result = ota_service.archive_image(image_id, not unarchive)
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
         click.echo(json.dumps(str(e), indent=2))

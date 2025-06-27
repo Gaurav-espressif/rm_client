@@ -218,6 +218,7 @@ class GroupingService:
 
     # Group Sharing Operations
     def share_group(self, groups: List[str], user_name: str, primary: bool = False,
+                   transfer: bool = False, new_role: Optional[str] = None,
                    metadata: Optional[Dict] = None) -> Dict:
         """Share groups or matter fabrics with another user"""
         endpoint = "/v1/user/node_group/sharing"
@@ -227,6 +228,10 @@ class GroupingService:
             "primary": primary
         }
         
+        if transfer:
+            payload["transfer"] = transfer
+        if new_role:
+            payload["new_role"] = new_role
         if metadata:
             payload["metadata"] = metadata
             
