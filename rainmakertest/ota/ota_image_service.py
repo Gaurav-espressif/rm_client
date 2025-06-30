@@ -64,7 +64,13 @@ class OTAService:
             self,
             ota_image_id: Optional[str] = None,
             ota_image_name: Optional[str] = None,
-            contains: bool = False
+            type: Optional[str] = None,
+            model: Optional[str] = None,
+            num_records: Optional[str] = None,
+            start_id: Optional[str] = None,
+            contains: bool = False,
+            archived: bool = False,
+            all: bool = False
     ) -> Dict:
         """Get OTA image details"""
         endpoint = "/v1/admin/otaimage"
@@ -72,11 +78,34 @@ class OTAService:
         if ota_image_id:
             params["ota_image_id"] = ota_image_id
         if ota_image_name:
-            params["ota_image_name"] = ota_image_name
+            params["image_name"] = ota_image_name
+        if type:
+            params["type"] = type
+        if model:
+            params["model"] = model
+        if num_records:
+            params["num_records"] = num_records
+        if start_id:
+            params["start_id"] = start_id
         if contains:
             params["contains"] = "true"
+        if archived:
+            params["archived"] = "true"
+        if all:
+            params["all"] = "true"
 
-        return self.api_client.get(endpoint, params=params)
+        # Get the raw response from the API
+        response = self.api_client.get(endpoint, params=params)
+        
+        # If we get a single image (when using ota_image_id), wrap it in a list
+        if response and isinstance(response, dict) and 'ota_image_id' in response:
+            return {'ota_images': [response]}
+        
+        # If we get a list of images, return as is
+        if response and isinstance(response, list):
+            return {'ota_images': response}
+            
+        return {'ota_images': []} if response is None else response
 
     def delete_image(self, ota_image_id: str) -> Dict:
         """Delete an OTA image"""

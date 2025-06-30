@@ -62,14 +62,40 @@ def upload(ctx, base64_str, file, name, version, model, type):
         click.echo(json.dumps(str(e), indent=2))
 
 @image.command()
+@click.option('--image-id', help="OTA Image ID")
+@click.option('--name', help="OTA Image Name")
+@click.option('--type', help="OTA Image Type")
+@click.option('--model', help="OTA Image Model")
+@click.option('--num-records', help="Number of records to fetch (for pagination)")
+@click.option('--start-id', help="Start ID of records to fetch (for pagination)")
+@click.option('--contains', is_flag=True, help="Enable pattern search on image name")
+@click.option('--archived', is_flag=True, help="Show only archived OTA images")
+@click.option('--all', is_flag=True, help="Show all images regardless of archive status")
 @click.pass_context
-def list(ctx):
+def list(ctx, image_id, name, type, model, num_records, start_id, contains, archived, all):
     """List all OTA images"""
     ota_service = ctx.obj['ota_image_service']
     try:
-        result = ota_service.get_images()
+        # Extract parameters
+        params = {
+            'ota_image_id': image_id,
+            'ota_image_name': name,
+            'type': type,
+            'model': model,
+            'num_records': num_records,
+            'start_id': start_id,
+            'contains': contains,
+            'archived': archived,
+            'all': all
+        }
+        
+        # Remove None values to only pass provided parameters
+        params = {k: v for k, v in params.items() if v is not None}
+        
+        result = ota_service.get_images(**params)
+        
         if result.get('ota_images'):
-            headers = ['Image ID', 'Name', 'Type', 'Version', 'Model', 'Size', 'Uploaded']
+            headers = ['Image ID', 'Name', 'Type', 'Version', 'Model', 'Size', 'Uploaded', 'Archived', 'Stream ID']
             table_data = [
                 [
                     img['ota_image_id'],
@@ -77,8 +103,10 @@ def list(ctx):
                     img['type'],
                     img['fw_version'],
                     img['model'],
-                    f"{img['file_size'] / 1024:.2f} KB",
-                    img['upload_timestamp']
+                    f"{int(img['file_size'])/1024:.2f} KB",
+                    img['upload_timestamp'],
+                    'Yes' if img.get('archived', False) else 'No',
+                    img.get('stream_id', 'N/A')
                 ]
                 for img in result['ota_images']
             ]
