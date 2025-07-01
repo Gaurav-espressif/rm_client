@@ -125,3 +125,41 @@ class OTAService:
             "archive": "true" if archive else "false"
         }
         return self.api_client.put(endpoint, params=params)
+
+
+    def get_package_upload_url(self, file_name: str) -> Dict:
+        """Get pre-signed URL for firmware package upload.
+        
+        This API fetches a presigned URL that can be used to upload the firmware package.
+        The file_name must include the file extension.
+        
+        Args:
+            file_name: Name of the file with file extension to upload
+            
+        Returns:
+            Dict containing the pre-signed URL for upload
+        """
+        endpoint = "/v1/admin/otaimage/package/upload"
+        params = {"file_name": file_name}
+        return self.api_client.get(endpoint, params=params)
+
+    def upload_package(self, image_name: str, type: str, file_path: str) -> Dict:
+        """Upload a new firmware package.
+        
+        This API uploads a new package containing the Firmware image to Rainmaker Cloud.
+        
+        Args:
+            image_name: Name of the image (e.g. "Alexa echo 2")
+            type: Type of the image (e.g. "alexa")
+            file_path: Path to the file that has been uploaded to S3
+            
+        Returns:
+            Dict containing the upload response
+        """
+        endpoint = "/v1/admin/otaimage/package"
+        payload = {
+            "image_name": image_name,
+            "type": type,
+            "file_path": file_path
+        }
+        return self.api_client.post(endpoint, json=payload)

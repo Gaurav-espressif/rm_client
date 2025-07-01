@@ -114,3 +114,20 @@ class OTAJobService:
 
         # The API client will handle exceptions and return a structured dict
         return self.api_client.put(endpoint, json=payload)
+
+    def get_job_status_summary(self, ota_job_id: str) -> Dict:
+        """Get summary of OTA job status.
+        
+        This API provides the summary of the OTA job including counts of nodes with 
+        various OTA status - in_progress, triggered, started, rejected, delayed,
+        success, failed and total count.
+        
+        Args:
+            ota_job_id: The ID of the OTA job to get status for
+            
+        Returns:
+            Dict containing the job status summary with various status counts
+        """
+        endpoint = "/v1/admin/otajob/status/summary"
+        params = {"ota_job_id": ota_job_id}
+        return self.api_client.get(endpoint, params=params)
