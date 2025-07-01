@@ -93,30 +93,7 @@ def list(ctx, image_id, name, type, model, num_records, start_id, contains, arch
         params = {k: v for k, v in params.items() if v is not None}
         
         result = ota_service.get_images(**params)
-        
-        if result.get('ota_images'):
-            headers = ['Image ID', 'Name', 'Type', 'Version', 'Model', 'Size', 'Uploaded', 'Archived', 'Stream ID']
-            table_data = [
-                [
-                    img['ota_image_id'],
-                    img['image_name'],
-                    img['type'],
-                    img['fw_version'],
-                    img['model'],
-                    f"{int(img['file_size'])/1024:.2f} KB",
-                    img['upload_timestamp'],
-                    'Yes' if img.get('archived', False) else 'No',
-                    img.get('stream_id', 'N/A')
-                ]
-                for img in result['ota_images']
-            ]
-            output = {
-                "headers": headers,
-                "data": table_data
-            }
-        else:
-            output = []
-        click.echo(json.dumps(output, indent=2))
+        click.echo(json.dumps(result, indent=2))
     except Exception as e:
         click.echo(json.dumps(str(e), indent=2))
 
@@ -143,6 +120,32 @@ def archive(ctx, image_id, unarchive):
         # If --unarchive flag is True, we want to unarchive (archive=False)
         # If --unarchive flag is False (default), we want to archive (archive=True)
         result = ota_service.archive_image(image_id, not unarchive)
+        click.echo(json.dumps(result, indent=2))
+    except Exception as e:
+        click.echo(json.dumps(str(e), indent=2))
+
+@image.command()
+@click.option('--file-name', required=True, help="Name of the file with file extension")
+@click.pass_context
+def get_upload_url(ctx, file_name):
+    """Get pre-signed URL for firmware package upload"""
+    ota_service = ctx.obj['ota_image_service']
+    try:
+        result = ota_service.get_package_upload_url(file_name)
+        click.echo(json.dumps(result, indent=2))
+    except Exception as e:
+        click.echo(json.dumps(str(e), indent=2))
+
+@image.command()
+@click.option('--name', required=True, help="Image name")
+@click.option('--type', required=True, help="Image type (e.g. alexa)")
+@click.option('--file-path', required=True, help="Path to the file that has been uploaded to S3")
+@click.pass_context
+def upload_package(ctx, name, type, file_path):
+    """Upload a new firmware package that was previously uploaded to S3"""
+    ota_service = ctx.obj['ota_image_service']
+    try:
+        result = ota_service.upload_package(name, type, file_path)
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
         click.echo(json.dumps(str(e), indent=2))
@@ -243,6 +246,18 @@ def status(ctx, job_id):
     ota_job_service = ctx.obj['ota_job_service']
     try:
         result = ota_job_service.get_job_status(job_id)
+        click.echo(json.dumps(result, indent=2))
+    except Exception as e:
+        click.echo(json.dumps(str(e), indent=2))
+
+@job.command()
+@click.option('--job-id', required=True, help="OTA Job ID")
+@click.pass_context
+def summary(ctx, job_id):
+    """Get summary of OTA job status including node counts"""
+    ota_job_service = ctx.obj['ota_job_service']
+    try:
+        result = ota_job_service.get_job_status_summary(job_id)
         click.echo(json.dumps(result, indent=2))
     except Exception as e:
         click.echo(json.dumps(str(e), indent=2)) 
