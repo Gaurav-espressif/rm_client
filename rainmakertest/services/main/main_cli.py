@@ -17,6 +17,10 @@ from ...utils.token_json_load import prettify
 from ...nodes.node_service import NodeService
 from ...nodes.node_admin_service import NodeAdminService
 from ...device_grouping.grouping import GroupingService
+from ...timeseries.timeseries import TimeSeriesService
+from ...event_filter.event_filter import EventFilterService
+from ...role_policy_manager.role_policy import RolePolicyService
+from ...moblie_platfrom_endpoint.moblie_platfrom_endpoint import MobilePlatformEndpointService
 from ...utils.config_manager import ConfigManager
 from ...utils.logging_config import setup_logging, get_logger
 from ...utils.paths import get_user_config_path, get_temp_dir, get_project_root, get_user_config_dir, ensure_directory_exists
@@ -48,6 +52,10 @@ from ..email.email_cli import email
 from ..server.server_cli import server
 from ..create.create_cli import create
 from ..device_grouping.grouping_cli import grouping
+from ..timeseries.timeseries_cli import timeseries
+from ..event_filter.event_filter_cli import event_filter
+from ..role_policy_manager.role_policy_cli import role_policy
+from ..moblie_platfrom_endpoint.moblie_platfrom_endpoint_cli import mobile_platform
 
 @click.group()
 @click.option('--debug', is_flag=True, help="Enable debug logging")
@@ -80,6 +88,10 @@ def cli(ctx, debug, config):
     ctx.obj['node_service'] = NodeService(api_client)
     ctx.obj['node_admin_service'] = NodeAdminService(api_client)
     ctx.obj['grouping_service'] = GroupingService(api_client)
+    ctx.obj['timeseries_service'] = TimeSeriesService(api_client)
+    ctx.obj['event_filter_service'] = EventFilterService(api_client)
+    ctx.obj['role_policy_service'] = RolePolicyService(api_client)
+    ctx.obj['mobile_platform_service'] = MobilePlatformEndpointService(api_client)
     
     # Store config_id in context if provided
     if config:
@@ -115,7 +127,7 @@ def cli(ctx, debug, config):
             logger.debug(f"Created default config at: {default_config_path}")
             
     # For commands that require authentication, verify token
-    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping']:
+    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping', 'timeseries', 'event_filter', 'role_policy', 'mobile_platform']:
         token = api_client.config_manager.get_token()
         if not token:
             logger.warning("No token found, login required")
@@ -134,6 +146,10 @@ cli.add_command(email)
 cli.add_command(server)
 cli.add_command(create)
 cli.add_command(grouping)
+cli.add_command(timeseries)
+cli.add_command(event_filter)
+cli.add_command(role_policy)
+cli.add_command(mobile_platform)
 
 @server.command()
 def reset():
