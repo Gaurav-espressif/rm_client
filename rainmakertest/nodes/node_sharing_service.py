@@ -91,9 +91,10 @@ class NodeSharingService:
         nodes: List[str],
         user_name: str,
         metadata: Optional[Dict] = None,
+        new_role: Optional[str] = None,
         version: str = "v1"
     ) -> Dict:
-        """Transfer node ownership to another user"""
+        
         endpoint = f"/{version}/user/nodes/sharing"
         payload = {
             "nodes": nodes,
@@ -102,5 +103,7 @@ class NodeSharingService:
         }
         if metadata:
             payload["metadata"] = metadata
+        if new_role:
+            payload["new_role"] = new_role
         self.logger.debug(f"Sending transfer request to {endpoint} with payload: {payload}")
         return self.api_client.put(endpoint, json=payload) 
