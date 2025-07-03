@@ -135,10 +135,11 @@ def share(ctx, nodes: str, user_name: str, primary: bool, metadata: Optional[str
 @click.option('--nodes', required=True, help='Comma-separated list of node IDs')
 @click.option('--user-name', required=True, help='Username to transfer to')
 @click.option('--metadata', help='JSON string of metadata')
+@click.option('--new-role', type=click.Choice(['secondary']), help='New role for self after transfer')
 @click.option('--version', default='v1', help='API version')
 @click.pass_context
-def transfer(ctx, nodes: str, user_name: str, metadata: Optional[str], version: str):
-    """Transfer node ownership to another user"""
+def transfer(ctx, nodes: str, user_name: str, metadata: Optional[str], new_role: Optional[str], version: str):
+    """Transfer node ownership to another user with optional role reassignment"""
     try:
         # Use the API client from context which has the correct config_id
         api_client = ctx.obj['api_client']
@@ -151,6 +152,7 @@ def transfer(ctx, nodes: str, user_name: str, metadata: Optional[str], version: 
             nodes=nodes_list,
             user_name=user_name,
             metadata=metadata_dict,
+            new_role=new_role,
             version=version
         )
         click.echo(json.dumps(result, indent=2))
@@ -160,7 +162,6 @@ def transfer(ctx, nodes: str, user_name: str, metadata: Optional[str], version: 
         logger.error(f"Error transferring nodes: {str(e)}")
         click.echo(f"Error: {str(e)}", err=True)
         raise click.Abort()
-
 @sharing.command()
 @click.option('--request-id', required=True, help='Share request ID')
 @click.option('--accept/--decline', required=True, help='Accept or decline the request')
