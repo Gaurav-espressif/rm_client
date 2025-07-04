@@ -18,6 +18,7 @@ from ...nodes.node_service import NodeService
 from ...nodes.node_admin_service import NodeAdminService
 from ...device_grouping.grouping import GroupingService
 from ...timeseries.timeseries import TimeSeriesService
+from ...event_filter.event_filter import EventFilterService
 from ...utils.config_manager import ConfigManager
 from ...utils.logging_config import setup_logging, get_logger
 from ...utils.paths import get_user_config_path, get_temp_dir, get_project_root, get_user_config_dir, ensure_directory_exists
@@ -50,6 +51,7 @@ from ..server.server_cli import server
 from ..create.create_cli import create
 from ..device_grouping.grouping_cli import grouping
 from ..timeseries.timeseries_cli import timeseries
+from ..event_filter.event_filter_cli import event_filter
 
 @click.group()
 @click.option('--debug', is_flag=True, help="Enable debug logging")
@@ -83,6 +85,7 @@ def cli(ctx, debug, config):
     ctx.obj['node_admin_service'] = NodeAdminService(api_client)
     ctx.obj['grouping_service'] = GroupingService(api_client)
     ctx.obj['timeseries_service'] = TimeSeriesService(api_client)
+    ctx.obj['event_filter_service'] = EventFilterService(api_client)
     
     # Store config_id in context if provided
     if config:
@@ -118,7 +121,7 @@ def cli(ctx, debug, config):
             logger.debug(f"Created default config at: {default_config_path}")
             
     # For commands that require authentication, verify token
-    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping', 'timeseries']:
+    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping', 'timeseries', 'event_filter']:
         token = api_client.config_manager.get_token()
         if not token:
             logger.warning("No token found, login required")
@@ -138,6 +141,7 @@ cli.add_command(server)
 cli.add_command(create)
 cli.add_command(grouping)
 cli.add_command(timeseries)
+cli.add_command(event_filter)
 
 @server.command()
 def reset():
