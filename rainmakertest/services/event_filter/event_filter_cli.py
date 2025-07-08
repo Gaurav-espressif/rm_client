@@ -236,8 +236,10 @@ def get(ctx, event_type: Optional[str], entity_type: Optional[str], entity_id: O
 @user.command()
 @click.option('--event-type', required=True, help='RainMaker event type (e.g. rmaker.event.node_connected)')
 @click.option('--entity-id', required=True, help='Entity ID (User ID or Node ID)')
+@click.option('--entity-type', required=True, type=click.Choice(['User', 'Node'], case_sensitive=False),
+              help='Entity type')
 @click.pass_context
-def delete(ctx, event_type: str, entity_id: str):
+def delete(ctx, event_type: str, entity_id: str, entity_type: str):
     """Delete an event filter as user"""
     try:
         api_client = ctx.obj['api_client']
@@ -245,7 +247,8 @@ def delete(ctx, event_type: str, entity_id: str):
         
         result = event_filter_service.delete_user_event_filter(
             event_type=event_type,
-            entity_id=entity_id
+            entity_id=entity_id,
+            entity_type=entity_type
         )
         click.echo(json.dumps(result, indent=2))
     except ValueError as e:
