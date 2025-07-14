@@ -142,12 +142,13 @@ class EventFilterService:
             
         return self.api_client.get(endpoint, params=params)
 
-    def delete_user_event_filter(self, event_type: str, entity_id: str) -> Dict:
+    def delete_user_event_filter(self, event_type: str, entity_id: str,entity_type: str) -> Dict:
         """Delete an event filter as user"""
         endpoint = "/v1/user/event_filter"
         data = {
             "event_type": event_type,
-            "entity_id": entity_id
+            "entity_id": entity_id,
+            "entity_type": entity_type
         }
             
         return self.api_client.delete(endpoint, json=data)
