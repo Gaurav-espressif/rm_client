@@ -26,7 +26,17 @@ from ...utils.config_manager import ConfigManager
 from ...utils.logging_config import setup_logging, get_logger
 from ...utils.paths import get_user_config_path, get_temp_dir, get_project_root, get_user_config_dir, ensure_directory_exists
 from ...node_parameter_operations.node_parameter_operations import NodeParameterOperationsService
+from ...secure_sign.secure_sign import SecureSignService
+from ...key_management.key_management import KeyManagementService
+from ...command_response_communication.command_response_communication import CommandResponseCommunicationService
+from ...user_public_profile.user_public_profile import UserPublicProfileService
+from ...external_api_passthrough.external_api_passthrough import ExternalApiPassthroughService
 from ..node_parameter_operations.node_parameter_operations_cli import params
+from ..secure_sign.secure_sign_cli import secure_sign
+from ..key_management.key_management_cli import key
+from ..command_response_communication.command_response_communication_cli import cmd
+from ..user_public_profile.user_public_profile_cli import profile
+from ..external_api_passthrough.external_api_passthrough_cli import passthrough
 
 # Configure root logger only once
 logger = logging.getLogger('rainmakertest')
@@ -98,6 +108,11 @@ def cli(ctx, debug, config):
     ctx.obj['mobile_platform_service'] = MobilePlatformEndpointService(api_client)
     ctx.obj['automation_service'] = AutomationTriggerService(api_client)
     ctx.obj['node_params_service'] = NodeParameterOperationsService(api_client)
+    ctx.obj['secure_sign_service'] = SecureSignService(api_client)
+    ctx.obj['key_management_service'] = KeyManagementService(api_client)
+    ctx.obj['command_response_service'] = CommandResponseCommunicationService(api_client)
+    ctx.obj['user_public_profile_service'] = UserPublicProfileService(api_client)
+    ctx.obj['external_api_service'] = ExternalApiPassthroughService(api_client)
     
     # Store config_id in context if provided
     if config:
@@ -133,7 +148,7 @@ def cli(ctx, debug, config):
             logger.debug(f"Created default config at: {default_config_path}")
             
     # For commands that require authentication, verify token
-    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping', 'timeseries', 'event_filter', 'role_policy', 'mobile_platform', 'automation', 'params']:
+    if ctx.invoked_subcommand not in ['login', 'create', 'email', 'server', 'user', 'grouping', 'timeseries', 'event_filter', 'role_policy', 'mobile_platform', 'automation', 'params', 'secure_sign', 'key', 'cmd', 'profile', 'external_api']:
         token = api_client.config_manager.get_token()
         if not token:
             logger.warning("No token found, login required")
@@ -158,6 +173,11 @@ cli.add_command(role_policy)
 cli.add_command(mobile_platform)
 cli.add_command(automation)
 cli.add_command(params)
+cli.add_command(secure_sign)
+cli.add_command(key)
+cli.add_command(cmd)
+cli.add_command(profile)
+cli.add_command(passthrough)
 
 @server.command()
 def reset():
